@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Section } from "@/components/shared/section";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, formatCurrency } from "@/lib/utils";
 
 type Draft = {
@@ -103,9 +104,25 @@ export default function SettingsPage() {
   };
 
   const remove = async (id: string) => {
-    await productsApi.delete(id);
-    delImage(id);
-    await reload();
+    try {
+      await productsApi.delete(id);
+      delImage(id);
+    } catch (err: any) {
+      const status = err?.status;
+      const message = err?.message || 'Failed to delete product';
+      if (status === 409 || /foreign key|order/i.test(message)) {
+        const confirmHide = window.confirm('This product has order history and cannot be deleted. Hide it instead?');
+        if (confirmHide) {
+          await productsApi.update(id, { available: false });
+        } else {
+          window.alert(message);
+        }
+      } else {
+        window.alert(message);
+      }
+    } finally {
+      await reload();
+    }
   };
 
   const filtered = useMemo(
@@ -130,23 +147,37 @@ export default function SettingsPage() {
               {filtered.length === 0 ? (
                 <p className="text-muted-foreground">No products.</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filtered.map((p) => (
-                    <div key={p.id} className="border rounded-md p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="min-w-0">
-                          <div className="font-medium truncate" title={p.name}>{p.name}</div>
-                          <div className="text-xs text-muted-foreground">{formatCurrency(p.price)} • {p.category}</div>
-                        </div>
-                        <div className={cn("text-xs px-2 py-0.5 rounded", p.available ? "bg-green-500/15 text-green-400" : "bg-amber-500/15 text-amber-400")}>{p.available ? "Available" : "Hidden"}</div>
-                      </div>
-                      <div className="mt-3 flex items-center justify-end gap-2">
-                        <Button variant="secondary" onClick={() => onEdit(p)}>Edit</Button>
-                        <Button variant="secondary" onClick={() => toggle(p.id)}>{p.available ? "Hide" : "Show"}</Button>
-                        <Button variant="destructive" onClick={() => remove(p.id)}>Delete</Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="w-full overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40%]">Name</TableHead>
+                        <TableHead className="w-[15%]">Price</TableHead>
+                        <TableHead className="w-[20%]">Category</TableHead>
+                        <TableHead className="w-[15%]">Status</TableHead>
+                        <TableHead className="text-right w-[10%]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell title={p.name} className="font-medium truncate max-w-[320px]">{p.name}</TableCell>
+                          <TableCell>{formatCurrency(p.price)}</TableCell>
+                          <TableCell>{p.category}</TableCell>
+                          <TableCell>
+                            <div className={cn("inline-flex text-xs px-2 py-0.5 rounded", p.available ? "bg-green-500/15 text-green-600" : "bg-amber-500/15 text-amber-600")}>{p.available ? "Available" : "Hidden"}</div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex gap-2">
+                              <Button size="sm" variant="secondary" onClick={() => onEdit(p)}>Edit</Button>
+                              <Button size="sm" variant="secondary" onClick={() => toggle(p.id)}>{p.available ? "Hide" : "Show"}</Button>
+                              <Button size="sm" variant="destructive" onClick={() => remove(p.id)}>Delete</Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
@@ -186,4 +217,3 @@ export default function SettingsPage() {
     </Section>
   );
 }
-

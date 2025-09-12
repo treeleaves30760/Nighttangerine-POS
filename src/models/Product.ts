@@ -70,6 +70,11 @@ export class ProductModel {
     return deletedRows > 0;
   }
 
+  static async hasOrderReferences(id: string): Promise<boolean> {
+    const ref = await db('order_items').where({ product_id: id }).first();
+    return Boolean(ref);
+  }
+
   static async toggleAvailability(id: string): Promise<Product | null> {
     const product = await this.findById(id);
     if (!product) return null;

@@ -160,15 +160,31 @@ router.patch('/:id/availability', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Prevent deleting products referenced by order_items
+    const hasRefs = await ProductModel.hasOrderReferences(id);
+    if (hasRefs) {
+      return res.status(409).json({
+        error: 'Product has order history',
+        message: 'This product appears in one or more orders and cannot be deleted. Hide it instead.',
+      });
+    }
+
     const deleted = await ProductModel.delete(id);
-    
     if (!deleted) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    
+
     return res.status(204).send();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting product:', error);
+    // Handle FK violation fallback
+    if (error && typeof error === 'object' && (error.code === '23503' || /foreign key/i.test(error.message || ''))) {
+      return res.status(409).json({
+        error: 'Product has order history',
+        message: 'This product appears in one or more orders and cannot be deleted. Hide it instead.',
+      });
+    }
     return res.status(500).json({ 
       error: 'Failed to delete product',
       message: error instanceof Error ? error.message : 'Unknown error'
