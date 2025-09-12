@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Section } from "@/components/shared/section";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { productsApi } from "@/lib/api";
-import { ordersApi, type OrderSummary } from "@/lib/orders";
+import { ordersApi, type Order } from "@/lib/orders";
 import { cn, formatCurrency } from "@/lib/utils";
 
 function FinishedOrdersPanel() {
-	const [finished, setFinished] = useState<OrderSummary[]>([]);
+	const [finished, setFinished] = useState<Order[]>([]);
 
 	useEffect(() => {
 		let mounted = true;

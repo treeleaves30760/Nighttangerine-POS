@@ -8,18 +8,29 @@ router.get('/', async (req, res) => {
   try {
     const status = String(req.query['status'] || 'active');
     if (status === 'finished') {
-      const rows = await OrderModel.findFinished();
-      return res.json(rows.map(({ id, number, status, created_at }) => ({ id, number, status, createdAt: created_at })));
+      // Finished with items for clerk view
+      const orders = await OrderModel.findFinished();
+      return res.json(
+        orders.map((o) => ({
+          id: o.id,
+          number: o.number,
+          status: o.status,
+          createdAt: o.created_at,
+          items: (o.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
+        }))
+      );
     }
     // active = not finished, with items
     const orders = await OrderModel.findActive();
-    return res.json(orders.map((o) => ({
-      id: o.id,
-      number: o.number,
-      status: o.status,
-      createdAt: o.created_at,
-      items: (o.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
-    })));
+    return res.json(
+      orders.map((o) => ({
+        id: o.id,
+        number: o.number,
+        status: o.status,
+        createdAt: o.created_at,
+        items: (o.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
+      }))
+    );
   } catch (err) {
     console.error('Error fetching orders:', err);
     return res.status(500).json({ error: 'Failed to fetch orders' });
@@ -78,4 +89,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 export default router;
-

@@ -13,6 +13,7 @@ export type Order = {
   status: OrderStatus;
   items: OrderItem[];
   createdAt: string;
+  hidden?: boolean;
 };
 
 export type OrderSummary = Pick<Order, 'id' | 'number' | 'status' | 'createdAt'>;
@@ -75,19 +76,20 @@ export const ordersApi = {
       return await fetchApi<Order[]>('/api/orders?status=active');
     } catch {
       const all = readLS();
-      return all.filter((o) => o.status !== 'finished').sort((a, b) => b.number - a.number);
+      return all
+        .filter((o) => !o.hidden && o.status !== 'finished')
+        .sort((a, b) => b.number - a.number);
     }
   },
 
-  // Return finished orders for display
-  async getFinished(): Promise<OrderSummary[]> {
+  // Return finished orders (now with items)
+  async getFinished(): Promise<Order[]> {
     try {
-      return await fetchApi<OrderSummary[]>('/api/orders?status=finished');
+      return await fetchApi<Order[]>('/api/orders?status=finished');
     } catch {
       const all = readLS();
       return all
-        .filter((o) => o.status === 'finished')
-        .map(({ id, number, status, createdAt }) => ({ id, number, status, createdAt }))
+        .filter((o) => !o.hidden && o.status === 'finished')
         .sort((a, b) => b.number - a.number)
         .slice(0, 30);
     }
@@ -136,8 +138,13 @@ export const ordersApi = {
     try {
       await fetchApi<void>(`/api/orders/${id}`, { method: 'DELETE' });
     } catch {
-      const all = readLS().filter((o) => o.id !== id);
-      writeLS(all);
+      const all = readLS();
+      const idx = all.findIndex((o) => o.id === id);
+      if (idx !== -1) {
+        const next = [...all];
+        next[idx] = { ...next[idx], hidden: true } as Order;
+        writeLS(next);
+      }
     }
   },
 };

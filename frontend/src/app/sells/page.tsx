@@ -23,7 +23,13 @@ export default function SellsPage() {
 
   useEffect(() => {
     productsApi.getAvailable().then(setMenu).catch(() => setMenu([]));
-    ordersApi.getActive().then(setActiveOrders);
+    // Load both active and finished so finished remain visible until removed
+    Promise.all([ordersApi.getActive(), ordersApi.getFinished()])
+      .then(([active, finished]) => {
+        const merged = [...finished, ...active].sort((a, b) => b.number - a.number);
+        setActiveOrders(merged);
+      })
+      .catch(() => setActiveOrders([]));
   }, []);
 
   const addToCart = (p: Product) => {
@@ -61,7 +67,8 @@ export default function SellsPage() {
 
   const markFinished = async (id: string) => {
     const updated = await ordersApi.markFinished(id);
-    setActiveOrders((prev) => prev.map((o) => (o.id === id ? updated : o)).filter((o) => o.status !== "finished"));
+    // Keep finished orders visible until explicitly removed
+    setActiveOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
   };
 
   const removeOrder = async (id: string) => {
@@ -94,11 +101,8 @@ export default function SellsPage() {
                     <button
                       key={p.id}
                       onClick={() => addToCart(p)}
-                      className="rounded-md border overflow-hidden text-left hover:ring-2 hover:ring-primary-500 focus:ring-2 focus:ring-primary-500"
+                      className="rounded-md border overflow-hidden text-left hover:ring-2 hover:ring-primary focus:ring-2 focus:ring-primary"
                     >
-                      <div className="aspect-square bg-muted/20 flex items-center justify-center">
-                        <span className="text-muted-foreground">Image</span>
-                      </div>
                       <div className="p-3">
                         <div className="font-medium truncate" title={p.name}>{p.name}</div>
                         <div className="text-sm text-muted-foreground">{formatCurrency(p.price)}</div>

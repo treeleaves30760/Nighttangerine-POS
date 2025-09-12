@@ -59,7 +59,10 @@ export class OrderModel {
   }
 
   static async findActive(): Promise<Order[]> {
-    const orders = await db('orders').whereNot({ status: 'finished' }).orderBy('number', 'desc');
+    const orders = await db('orders')
+      .where({ hidden: false })
+      .whereNot({ status: 'finished' })
+      .orderBy('number', 'desc');
     const ids = orders.map((o) => o.id);
     const items = await db('order_items').whereIn('order_id', ids);
     const byOrder = items.reduce<Record<string, OrderItem[]>>((acc, it) => {
@@ -70,7 +73,17 @@ export class OrderModel {
   }
 
   static async findFinished(): Promise<Order[]> {
-    return db('orders').where({ status: 'finished' }).orderBy('number', 'desc').limit(50);
+    const orders = await db('orders')
+      .where({ status: 'finished', hidden: false })
+      .orderBy('number', 'desc')
+      .limit(50);
+    const ids = orders.map((o) => o.id);
+    const items = await db('order_items').whereIn('order_id', ids);
+    const byOrder = items.reduce<Record<string, OrderItem[]>>((acc, it) => {
+      (acc[it.order_id] ||= []).push(it);
+      return acc;
+    }, {});
+    return orders.map((o) => ({ ...o, items: byOrder[o.id] || [] }));
   }
 
   static async markFinished(id: string): Promise<Order | null> {
@@ -84,10 +97,9 @@ export class OrderModel {
   }
 
   static async delete(id: string): Promise<boolean> {
-    const deleted = await db('orders').where({ id }).del();
-    return deleted > 0;
+    const updated = await db('orders').where({ id }).update({ hidden: true, updated_at: db.fn.now() });
+    return updated > 0;
   }
 }
 
 export default OrderModel;
-
