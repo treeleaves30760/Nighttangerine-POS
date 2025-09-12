@@ -5,6 +5,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import productsRouter from './routes/products';
 
 dotenv.config();
 
@@ -46,6 +47,9 @@ app.get('/health', (_req, res) => {
     version: process.env['npm_package_version'] || '1.0.0',
   });
 });
+
+// API Routes
+app.use('/api/products', productsRouter);
 
 // Basic API route
 app.get('/api/status', (_req, res) => {

@@ -17,60 +17,10 @@ import {
   Home
 } from 'lucide-react';
 import Link from 'next/link';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { productsApi, type Product } from '@/lib/api';
 
-// Mock authentication - in real app, this would use Auth0
-const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [user, setUser] = React.useState<{name: string; role: string} | null>(null);
-
-  React.useEffect(() => {
-    // Check localStorage for demo auth
-    const authStatus = localStorage.getItem('pos-auth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-      setUser({ name: 'John Doe', role: 'Cashier' });
-    }
-  }, []);
-
-  const login = (username: string, password: string) => {
-    // Demo authentication
-    if (username === 'admin' && password === 'password') {
-      setIsAuthenticated(true);
-      setUser({ name: 'Admin User', role: 'Manager' });
-      localStorage.setItem('pos-auth', 'true');
-      return true;
-    }
-    if (username === 'cashier' && password === 'password') {
-      setIsAuthenticated(true);
-      setUser({ name: 'Cashier User', role: 'Cashier' });
-      localStorage.setItem('pos-auth', 'true');
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem('pos-auth');
-  };
-
-  return { isAuthenticated, user, login, logout };
-};
-
-const LoginForm = ({ onLogin }: { onLogin: (username: string, password: string) => boolean }) => {
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = onLogin(username, password);
-    if (!success) {
-      setError('Invalid credentials. Try: admin/password or cashier/password');
-    }
-  };
-
+const LoginForm = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-md border border-gray-200 dark:border-gray-700">
@@ -83,48 +33,15 @@ const LoginForm = ({ onLogin }: { onLogin: (username: string, password: string) 
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Username
-            </label>
-            <Input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Password
-            </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" size="lg">
-            Sign In
+        <div className="space-y-4">
+          <Button asChild className="w-full" size="lg">
+            <a href="/api/auth/login">
+              Sign In with Auth0
+            </a>
           </Button>
-        </form>
+        </div>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Demo credentials: admin/password or cashier/password
-          </p>
           <Link href="/" className="text-purple-600 dark:text-purple-400 hover:underline text-sm">
             ← Back to menu
           </Link>
@@ -135,22 +52,33 @@ const LoginForm = ({ onLogin }: { onLogin: (username: string, password: string) 
 };
 
 export default function SellsPage() {
-  const { isAuthenticated, user, login, logout } = useAuth();
+  const { user, error, isLoading } = useUser();
   const [cart, setCart] = React.useState<Array<{id: string; name: string; price: number; quantity: number}>>([]);
   const [total, setTotal] = React.useState(0);
   const [orderNumber, setOrderNumber] = React.useState(143);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = React.useState(true);
+  const [productsError, setProductsError] = React.useState<string | null>(null);
 
-  const products = [
-    { id: '1', name: 'Cappuccino', price: 4.50, category: 'Beverages', available: true },
-    { id: '2', name: 'Croissant', price: 3.25, category: 'Bakery', available: true },
-    { id: '3', name: 'Caesar Salad', price: 12.99, category: 'Food', available: true },
-    { id: '4', name: 'Espresso', price: 2.50, category: 'Beverages', available: true },
-    { id: '5', name: 'Chocolate Muffin', price: 4.75, category: 'Bakery', available: true },
-    { id: '6', name: 'Green Tea', price: 3.00, category: 'Beverages', available: true },
-    { id: '7', name: 'Club Sandwich', price: 9.50, category: 'Food', available: true },
-    { id: '8', name: 'Soup of the Day', price: 6.75, category: 'Food', available: true },
-  ];
+  // Load products from API
+  React.useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setIsLoadingProducts(true);
+        setProductsError(null);
+        const fetchedProducts = await productsApi.getAll();
+        setProducts(fetchedProducts);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        setProductsError(error instanceof Error ? error.message : 'Failed to load products');
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -199,8 +127,32 @@ export default function SellsPage() {
     setTotal(newTotal);
   }, [cart]);
 
-  if (!isAuthenticated) {
-    return <LoginForm onLogin={login} />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400">Authentication error: {error.message}</p>
+          <Button asChild className="mt-4">
+            <a href="/api/auth/login">Try Again</a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginForm />;
   }
 
   return (
@@ -212,7 +164,7 @@ export default function SellsPage() {
             POS System
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Welcome, {user?.name}
+            Welcome, {user.name || user.email?.split('@')[0]}
           </p>
         </div>
         
@@ -238,9 +190,11 @@ export default function SellsPage() {
         </nav>
         
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="ghost" onClick={logout} className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900">
-            <LogOut className="mr-3 h-4 w-4" />
-            Sign Out
+          <Button variant="ghost" asChild className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900">
+            <a href="/api/auth/logout">
+              <LogOut className="mr-3 h-4 w-4" />
+              Sign Out
+            </a>
           </Button>
         </div>
       </div>
@@ -269,20 +223,62 @@ export default function SellsPage() {
           
           {/* Product Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <div 
-                key={product.id}
-                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer group"
-                onClick={() => addToCart(product)}
-              >
-                <div className="aspect-square bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-900 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Package className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            {isLoadingProducts ? (
+              // Loading skeleton
+              Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 animate-pulse">
+                  <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg mb-3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{product.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{product.category}</p>
-                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">${product.price.toFixed(2)}</p>
+              ))
+            ) : productsError ? (
+              <div className="col-span-full text-center py-12">
+                <Package className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Failed to Load Products</h3>
+                <p className="text-red-600 dark:text-red-400 mb-4">{productsError}</p>
+                <Button onClick={() => window.location.reload()} variant="outline">
+                  Try Again
+                </Button>
               </div>
-            ))}
+            ) : filteredProducts.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Products Found</h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {searchTerm ? `No products match "${searchTerm}"` : 'No products available'}
+                </p>
+              </div>
+            ) : (
+              filteredProducts.map((product) => (
+                <div 
+                  key={product.id}
+                  className={`bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 transition-all duration-200 group ${
+                    product.available 
+                      ? 'hover:shadow-md cursor-pointer' 
+                      : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  onClick={() => product.available && addToCart(product)}
+                >
+                  <div className={`aspect-square bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-900 rounded-lg mb-3 flex items-center justify-center transition-transform ${
+                    product.available ? 'group-hover:scale-105' : ''
+                  }`}>
+                    <Package className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{product.name}</h3>
+                    {!product.available && (
+                      <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">
+                        Out
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{product.category}</p>
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">${product.price.toFixed(2)}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

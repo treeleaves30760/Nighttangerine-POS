@@ -1,36 +1,28 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, Noto_Sans_TC } from "next/font/google";
+import { ThemeProvider } from "@/components/shared/theme-provider";
+import { Header } from "@/components/shared/header";
+import { Footer } from "@/components/shared/footer";
 import "./globals.css";
-import { ThemeProvider } from "@/providers/theme-provider";
-import { QueryProvider } from "@/providers/query-provider";
-import { UserProvider } from '@auth0/nextjs-auth0/client';
-import { Toaster } from "react-hot-toast";
 
-const inter = Inter({
-  variable: "--font-inter",
+const inter = Inter({ 
   subsets: ["latin"],
-  display: "swap",
+  variable: "--font-display",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const notoSansTC = Noto_Sans_TC({
   subsets: ["latin"],
-  display: "swap",
+  weight: ["400", "500", "700"],
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
-  title: "Nighttangerine POS",
-  description: "Modern Point of Sale System for Retail Businesses",
-  keywords: ["POS", "Point of Sale", "Retail", "Inventory", "Sales"],
-  authors: [{ name: "Nighttangerine" }],
-  creator: "Nighttangerine",
-  robots: "index, follow",
+  title: "Nighttangerine POS - The intuitive Point-of-Sale for small businesses",
+  description: "Streamline your checkout process, manage inventory, and understand your customers with a modern, easy-to-use POS system.",
 };
 
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-};
+
+import { UserProvider } from "@auth0/nextjs-auth0/client";
 
 export default function RootLayout({
   children,
@@ -39,25 +31,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen bg-background text-foreground`}
-      >
+      <body className={`${inter.variable} ${notoSansTC.variable}`}>
         <UserProvider>
-          <ThemeProvider>
-            <QueryProvider>
-              {children}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: 'var(--background)',
-                    color: 'var(--foreground)',
-                    border: '1px solid var(--border)',
-                  },
-                }}
-              />
-            </QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
           </ThemeProvider>
         </UserProvider>
       </body>
