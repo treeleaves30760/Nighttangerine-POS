@@ -7,8 +7,9 @@
     --font-display: 'Inter', ui-sans-serif;
     --font-body: 'Noto Sans TC', ui-sans-serif;
 
-    --background: 228 44% 8%; /* #0B1020 */
-    --foreground: 220 13% 90%; /* #E5E7EB */
+    /* Light mode: white background */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 220 15% 10%; /* near-black text */
 
     --card: 224 47% 11%; /* #0F172A */
     --card-foreground: 220 13% 90%;
@@ -41,8 +42,9 @@
   }
 
   .dark {
-    --background: 228 43% 7%; /* #070B1A */
-    --foreground: 220 13% 90%;
+    /* Dark mode: black background */
+    --background: 0 0% 0%; /* #000000 */
+    --foreground: 0 0% 100%; /* #FFFFFF */
 
     --card: 225 40% 8%; /* #0B1222 */
     --card-foreground: 220 13% 90%;

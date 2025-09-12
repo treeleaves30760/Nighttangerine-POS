@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import productsRouter from './routes/products';
+import ordersRouter from './routes/orders';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.get('/health', (_req, res) => {
 
 // API Routes
 app.use('/api/products', productsRouter);
+app.use('/api/orders', ordersRouter);
 
 // Basic API route
 app.get('/api/status', (_req, res) => {
