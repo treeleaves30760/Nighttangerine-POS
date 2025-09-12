@@ -13,36 +13,13 @@ type Draft = {
   name: string;
   price: string;
   category: string;
+  amount: string;
   imageUrl: string; // stored in localStorage until backend supports it
 };
 
-const empty: Draft = { name: "", price: "", category: "", imageUrl: "" };
+const empty: Draft = { name: "", price: "", category: "", amount: "", imageUrl: "" };
 
-function useImageMap() {
-  const key = "productImages";
-  const getMap = () => {
-    if (typeof window === "undefined") return {} as Record<string, string>;
-    try {
-      return JSON.parse(localStorage.getItem(key) || "{}") as Record<string, string>;
-    } catch {
-      return {} as Record<string, string>;
-    }
-  };
-  const [map, setMap] = useState<Record<string, string>>({});
-  useEffect(() => { setMap(getMap()); }, []);
-  const set = (id: string, url: string) => {
-    const next = { ...map, [id]: url };
-    setMap(next);
-    localStorage.setItem(key, JSON.stringify(next));
-  };
-  const del = (id: string) => {
-    const next = { ...map };
-    delete next[id];
-    setMap(next);
-    localStorage.setItem(key, JSON.stringify(next));
-  };
-  return { map, set, del };
-}
+// Removed local image map; using persisted image_url in backend
 
 export default function SettingsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -50,7 +27,7 @@ export default function SettingsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
-  const { map: imageMap, set: setImage, del: delImage } = useImageMap();
+  
 
   const reload = async () => {
     const data = await productsApi.getAll();
@@ -65,7 +42,8 @@ export default function SettingsPage() {
       name: p.name,
       price: String(p.price),
       category: p.category,
-      imageUrl: imageMap[p.id] || "",
+      amount: p.amount || "",
+      imageUrl: p.image_url || "",
     });
   };
 
@@ -79,17 +57,19 @@ export default function SettingsPage() {
           name: draft.name.trim(),
           price: Number(draft.price),
           category: draft.category.trim(),
+          amount: draft.amount.trim() || null,
+          image_url: draft.imageUrl.trim() || null,
         };
-        const updated = await productsApi.update(editing.id, updates);
-        if (draft.imageUrl) setImage(updated.id, draft.imageUrl); else delImage(updated.id);
+        await productsApi.update(editing.id, updates);
       } else {
         const data: CreateProductData = {
           name: draft.name.trim(),
           price: Number(draft.price),
           category: draft.category.trim(),
+          amount: draft.amount.trim() || null,
+          image_url: draft.imageUrl.trim() || null,
         };
-        const created = await productsApi.create(data);
-        if (draft.imageUrl) setImage(created.id, draft.imageUrl);
+        await productsApi.create(data);
       }
       reset();
       await reload();
@@ -106,14 +86,14 @@ export default function SettingsPage() {
   const remove = async (id: string) => {
     try {
       await productsApi.delete(id);
-      delImage(id);
+      // nothing extra
     } catch (err: any) {
       const status = err?.status;
       const message = err?.message || 'Failed to delete product';
       if (status === 409 || /foreign key|order/i.test(message)) {
         const confirmHide = window.confirm('This product has order history and cannot be deleted. Hide it instead?');
         if (confirmHide) {
-          await productsApi.update(id, { available: false });
+          await productsApi.update(id, { hidden: true });
         } else {
           window.alert(message);
         }
@@ -151,10 +131,11 @@ export default function SettingsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[40%]">Name</TableHead>
-                        <TableHead className="w-[15%]">Price</TableHead>
-                        <TableHead className="w-[20%]">Category</TableHead>
-                        <TableHead className="w-[15%]">Status</TableHead>
+                        <TableHead className="w-[34%]">Name</TableHead>
+                        <TableHead className="w-[12%]">Price</TableHead>
+                        <TableHead className="w-[14%]">Category</TableHead>
+                        <TableHead className="w-[15%]">Amount</TableHead>
+                        <TableHead className="w-[15%]">Visibility</TableHead>
                         <TableHead className="text-right w-[10%]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -164,13 +145,14 @@ export default function SettingsPage() {
                           <TableCell title={p.name} className="font-medium truncate max-w-[320px]">{p.name}</TableCell>
                           <TableCell>{formatCurrency(p.price)}</TableCell>
                           <TableCell>{p.category}</TableCell>
+                          <TableCell>{p.amount || '-'}</TableCell>
                           <TableCell>
-                            <div className={cn("inline-flex text-xs px-2 py-0.5 rounded", p.available ? "bg-green-500/15 text-green-600" : "bg-amber-500/15 text-amber-600")}>{p.available ? "Available" : "Hidden"}</div>
+                            <div className={cn("inline-flex text-xs px-2 py-0.5 rounded", !p.hidden ? "bg-green-500/15 text-green-600" : "bg-amber-500/15 text-amber-600")}>{!p.hidden ? "Shown" : "Hidden"}</div>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="inline-flex gap-2">
                               <Button size="sm" variant="secondary" onClick={() => onEdit(p)}>Edit</Button>
-                              <Button size="sm" variant="secondary" onClick={() => toggle(p.id)}>{p.available ? "Hide" : "Show"}</Button>
+                              <Button size="sm" variant="secondary" onClick={() => toggle(p.id)}>{!p.hidden ? "Hide" : "Show"}</Button>
                               <Button size="sm" variant="destructive" onClick={() => remove(p.id)}>Delete</Button>
                             </div>
                           </TableCell>
@@ -202,8 +184,18 @@ export default function SettingsPage() {
                 <Input value={draft.category} onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))} />
               </div>
               <div>
+                <div className="text-sm mb-1">Amount</div>
+                <Input placeholder="e.g. 3串 or 3個" value={draft.amount} onChange={(e) => setDraft((d) => ({ ...d, amount: e.target.value }))} />
+              </div>
+              <div>
                 <div className="text-sm mb-1">Image URL</div>
                 <Input placeholder="https://..." value={draft.imageUrl} onChange={(e) => setDraft((d) => ({ ...d, imageUrl: e.target.value }))} />
+                {draft.imageUrl && (
+                  <div className="mt-2 rounded-md overflow-hidden border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={draft.imageUrl} alt="preview" className="w-full h-40 object-cover" />
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
                 {editing && <Button variant="secondary" onClick={reset}>Cancel</Button>}

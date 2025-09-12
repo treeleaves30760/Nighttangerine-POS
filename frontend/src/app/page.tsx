@@ -73,26 +73,77 @@ function MenuGrid() {
 					<p className="text-muted-foreground">No items available.</p>
 				) : (
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-						{items.map((p) => (
-							<div key={p.id} className="rounded-md border overflow-hidden">
-								<div className="aspect-square bg-muted/20 flex items-center justify-center">
-									<span className="text-muted-foreground">Image</span>
-								</div>
-								<div className="p-3">
-									<div className="font-medium truncate" title={p.name}>
-										{p.name}
-									</div>
-									<div className="text-sm text-muted-foreground">
-										{formatCurrency(p.price)}
-									</div>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
-			</CardContent>
-		</Card>
-	);
+            {items.map((p) => (
+              <div key={p.id} className="rounded-md border overflow-hidden">
+                <div className="aspect-square bg-muted/20 flex items-center justify-center overflow-hidden">
+                  {p.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-muted-foreground">Image</span>
+                  )}
+                </div>
+            <div className="p-3">
+              <div className="font-medium truncate" title={p.name}>
+                {p.name}
+              </div>
+              <div className="text-sm text-muted-foreground flex items-center justify-between">
+                <span>{formatCurrency(p.price)}</span>
+                {p.amount && (
+                  <span className="ml-2 inline-block text-xs px-2 py-0.5 rounded bg-muted/40">{p.amount}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      )}
+      </CardContent>
+      </Card>
+      );
+}
+
+function PreparingOrdersPanel() {
+  const [preparing, setPreparing] = useState<Order[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const active = await ordersApi.getActive();
+        const list = active.filter((o) => o.status === 'preparing');
+        if (mounted) setPreparing(list);
+      } catch {
+        if (mounted) setPreparing([]);
+      }
+    };
+    load();
+    const id = setInterval(load, 5000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Preparing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {preparing.length === 0 ? (
+          <p className="text-muted-foreground">No orders in preparation.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {preparing.map((o) => (
+              <div key={o.id} className="rounded-lg border p-4 text-center text-2xl font-bold">
+                {o.number}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function CustomerDisplay() {
@@ -108,14 +159,15 @@ export default function CustomerDisplay() {
 	return (
 		<Section>
 			{header}
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				<div className="lg:col-span-1">
-					<FinishedOrdersPanel />
-				</div>
-				<div className="lg:col-span-2">
-					<MenuGrid />
-				</div>
-			</div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6 lg:col-span-1">
+          <PreparingOrdersPanel />
+          <FinishedOrdersPanel />
+        </div>
+        <div className="lg:col-span-2">
+          <MenuGrid />
+        </div>
+      </div>
 		</Section>
 	);
 }

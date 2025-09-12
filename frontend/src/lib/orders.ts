@@ -25,7 +25,9 @@ export type CreateOrderItem = {
   name?: string; // optional, used by local fallback
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const DEFAULT_BASES = ['http://localhost:3001', 'http://localhost:3000'];
+const ENV_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_CANDIDATES = ENV_BASE ? [ENV_BASE, ...DEFAULT_BASES.filter((b) => b !== ENV_BASE)] : DEFAULT_BASES;
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -59,13 +61,25 @@ function nextNumber(): number {
 }
 
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) throw new Error('Orders API error');
-  return (res.status === 204 ? null : await res.json()) as T;
+  let lastErr: unknown = null;
+  for (const base of API_BASE_CANDIDATES) {
+    try {
+      const url = `${base}${endpoint}`;
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+      if (!res.ok) {
+        lastErr = new Error(`Orders API error: ${res.status}`);
+        continue;
+      }
+      return (res.status === 204 ? null : await res.json()) as T;
+    } catch (err) {
+      lastErr = err;
+      continue;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Orders API error');
 }
 
 export const ordersApi = {

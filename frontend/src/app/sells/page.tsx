@@ -103,9 +103,20 @@ export default function SellsPage() {
                       onClick={() => addToCart(p)}
                       className="rounded-md border overflow-hidden text-left hover:ring-2 hover:ring-primary focus:ring-2 focus:ring-primary"
                     >
+                      <div className="aspect-square bg-muted/20 flex items-center justify-center overflow-hidden">
+                        {p.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-muted-foreground">Image</span>
+                        )}
+                      </div>
                       <div className="p-3">
                         <div className="font-medium truncate" title={p.name}>{p.name}</div>
-                        <div className="text-sm text-muted-foreground">{formatCurrency(p.price)}</div>
+                        <div className="text-sm text-muted-foreground flex items-center justify-between">
+                          <span>{formatCurrency(p.price)}</span>
+                          {p.amount && <span className="ml-2 inline-block text-xs px-2 py-0.5 rounded bg-muted/40">{p.amount}</span>}
+                        </div>
                       </div>
                     </button>
                   ))}

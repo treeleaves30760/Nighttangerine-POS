@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import ProductModel, { CreateProductData, UpdateProductData } from '../models/Product';
+import ProductModel, { UpdateProductData } from '../models/Product';
 
 const router: Router = express.Router();
 
@@ -69,7 +69,9 @@ router.get('/category/:category', async (req, res) => {
 // POST /api/products - Create new product
 router.post('/', async (req, res) => {
   try {
-    const { name, price, category, available = true }: CreateProductData & { available?: boolean } = req.body;
+    const { name, price, category, amount = null, hidden = false, available = true } = req.body as any;
+    // Support both imageUrl (camelCase) and image_url (snake_case)
+    const imageUrlInput: string | null = (req.body?.image_url ?? req.body?.imageUrl ?? null) || null;
     
     if (!name || !price || !category) {
       return res.status(400).json({ 
@@ -89,7 +91,10 @@ router.post('/', async (req, res) => {
       name: name.trim(),
       price: parseFloat(price.toString()),
       category: category.trim(),
-      available
+      amount: amount ? String(amount).trim() : null,
+      hidden: Boolean(hidden),
+      available,
+      image_url: imageUrlInput ? String(imageUrlInput).trim() : null,
     });
     
     return res.status(201).json(product);
@@ -107,6 +112,11 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates: UpdateProductData = req.body;
+    if ('imageUrl' in updates && !('image_url' in updates)) {
+      // normalize camelCase to snake_case
+      (updates as any).image_url = (updates as any).imageUrl;
+      delete (updates as any).imageUrl;
+    }
 
     if (updates.price !== undefined && updates.price <= 0) {
       return res.status(400).json({ 
@@ -118,7 +128,7 @@ router.put('/:id', async (req, res) => {
     // Trim string fields
     if (updates.name) updates.name = updates.name.trim();
     if (updates.category) updates.category = updates.category.trim();
-    if (updates.price) updates.price = parseFloat(updates.price.toString());
+    if (updates.price !== undefined) updates.price = parseFloat(updates.price.toString());
 
     const product = await ProductModel.update(id, updates);
     

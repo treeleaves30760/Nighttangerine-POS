@@ -3,7 +3,10 @@ export interface Product {
   name: string;
   price: number;
   category: string;
-  available: boolean;
+  amount?: string | null;
+  hidden?: boolean;
+  available: boolean; // legacy compatibility
+  image_url?: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -12,14 +15,20 @@ export interface CreateProductData {
   name: string;
   price: number;
   category: string;
-  available?: boolean;
+  amount?: string | null;
+  hidden?: boolean;
+  available?: boolean; // legacy
+  image_url?: string | null; // persisted URL
 }
 
 export interface UpdateProductData {
   name?: string;
   price?: number;
   category?: string;
-  available?: boolean;
+  amount?: string | null;
+  hidden?: boolean;
+  available?: boolean; // legacy
+  image_url?: string | null; // persisted URL
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
