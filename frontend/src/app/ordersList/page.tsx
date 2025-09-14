@@ -17,8 +17,8 @@ export default function OrdersListPage() {
     (async () => {
       try {
         const [active, finished] = await Promise.all([
-          ordersApi.getActive(),
-          ordersApi.getFinished(),
+          ordersApi.getActive(true),
+          ordersApi.getFinished(true),
         ]);
         if (!mounted) return;
         const merged = [...active, ...finished].sort((a, b) => b.number - a.number);
@@ -113,4 +113,3 @@ export default function OrdersListPage() {
     </Section>
   );
 }
-

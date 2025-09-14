@@ -28,5 +28,37 @@ export async function seed(knex: Knex): Promise<void> {
       hidden: false,
       available: true,
     },
+    {
+      name: '培根玉米筍',
+      price: 50,
+      category: 'Food',
+      amount: '3個',
+      hidden: false,
+      available: true,
+    },
+    {
+      name: '培根青椒串',
+      price: 50,
+      category: 'Food',
+      amount: '3個',
+      hidden: false,
+      available: true,
+    },
+    {
+      name: '蒜香香腸',
+      price: 40,
+      category: 'Food',
+      amount: '1支',
+      hidden: false,
+      available: true,
+    },
+    {
+      name: '和風蟹肉丸',
+      price: 50,
+      category: 'Food',
+      amount: '6顆',
+      hidden: false,
+      available: true,
+    },
   ]);
 }

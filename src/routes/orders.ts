@@ -7,9 +7,11 @@ const router: Router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const status = String(req.query['status'] || 'active');
+    const includeHidden = String(req.query['includeHidden'] || '').toLowerCase();
+    const withHidden = includeHidden === '1' || includeHidden === 'true';
     if (status === 'finished') {
       // Finished with items for clerk view
-      const orders = await OrderModel.findFinished();
+      const orders = await OrderModel.findFinished(withHidden);
       return res.json(
         orders.map((o) => ({
           id: o.id,
@@ -21,7 +23,7 @@ router.get('/', async (req, res) => {
       );
     }
     // active = not finished, with items
-    const orders = await OrderModel.findActive();
+    const orders = await OrderModel.findActive(withHidden);
     return res.json(
       orders.map((o) => ({
         id: o.id,

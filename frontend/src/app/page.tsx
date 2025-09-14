@@ -17,7 +17,7 @@ function FinishedOrdersPanel() {
 			if (mounted) setFinished(data);
 		};
 		load();
-		const id = setInterval(load, 5000);
+		const id = setInterval(load, 8000);
 		return () => {
 			mounted = false;
 			clearInterval(id);
@@ -26,27 +26,27 @@ function FinishedOrdersPanel() {
 
 	return (
 		<Card>
-			<CardHeader>
-				<CardTitle>Ready for Pickup</CardTitle>
-			</CardHeader>
+            <CardHeader>
+              <CardTitle className="text-3xl lg:text-4xl">Ready for Pickup</CardTitle>
+            </CardHeader>
 			<CardContent>
 				{finished.length === 0 ? (
 					<p className="text-muted-foreground">No finished orders yet.</p>
 				) : (
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
 						{finished.map((o) => (
-							<div
-								key={o.id}
-								className={cn(
-									"rounded-lg border p-4 text-center text-2xl font-bold",
-									"bg-secondary/10 border-secondary/30"
-								)}
-							>
-								{o.number}
-							</div>
-						))}
-					</div>
-				)}
+              <div
+                key={o.id}
+                className={cn(
+                  "rounded-lg border p-6 text-center text-4xl lg:text-5xl font-extrabold",
+                  "bg-secondary/10 border-secondary/30"
+                )}
+              >
+                {o.number}
+              </div>
+            ))}
+          </div>
+        )}
 			</CardContent>
 		</Card>
 	);
@@ -65,9 +65,9 @@ function MenuGrid() {
 
 	return (
 		<Card>
-			<CardHeader>
-				<CardTitle>Menu</CardTitle>
-			</CardHeader>
+            <CardHeader>
+              <CardTitle className="text-3xl lg:text-4xl">Menu</CardTitle>
+            </CardHeader>
 			<CardContent>
 				{items.length === 0 ? (
 					<p className="text-muted-foreground">No items available.</p>
@@ -83,19 +83,19 @@ function MenuGrid() {
                     <span className="text-muted-foreground">Image</span>
                   )}
                 </div>
-            <div className="p-3">
-              <div className="font-medium truncate" title={p.name}>
-                {p.name}
+                <div className="p-4">
+                  <div className="truncate font-semibold text-lg lg:text-xl" title={p.name}>
+                    {p.name}
+                  </div>
+                  <div className="text-base lg:text-lg text-muted-foreground flex items-center justify-between">
+                    <span className="font-medium">{formatCurrency(p.price)}</span>
+                    {p.amount && (
+                      <span className="ml-2 inline-block text-sm px-2 py-0.5 rounded bg-muted/40">{p.amount}</span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground flex items-center justify-between">
-                <span>{formatCurrency(p.price)}</span>
-                {p.amount && (
-                  <span className="ml-2 inline-block text-xs px-2 py-0.5 rounded bg-muted/40">{p.amount}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
+            ))}
       </div>
       )}
       </CardContent>
@@ -117,7 +117,7 @@ function PreparingOrdersPanel() {
       }
     };
     load();
-    const id = setInterval(load, 5000);
+    const id = setInterval(load, 8000);
     return () => {
       mounted = false;
       clearInterval(id);
@@ -127,7 +127,7 @@ function PreparingOrdersPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Preparing</CardTitle>
+        <CardTitle className="text-3xl lg:text-4xl">Preparing</CardTitle>
       </CardHeader>
       <CardContent>
         {preparing.length === 0 ? (
@@ -135,7 +135,7 @@ function PreparingOrdersPanel() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {preparing.map((o) => (
-              <div key={o.id} className="rounded-lg border p-4 text-center text-2xl font-bold">
+              <div key={o.id} className="rounded-lg border p-6 text-center text-4xl lg:text-5xl font-extrabold">
                 {o.number}
               </div>
             ))}
@@ -147,14 +147,14 @@ function PreparingOrdersPanel() {
 }
 
 export default function CustomerDisplay() {
-	const header = useMemo(
-		() => (
-			<div className="flex items-baseline justify-between mb-6">
-				<h1 className="text-3xl font-bold tracking-tight">Now Serving</h1>
-			</div>
-		),
-		[]
-	);
+    const header = useMemo(
+      () => (
+        <div className="flex items-baseline justify-between mb-6">
+          <h1 className="text-5xl font-extrabold tracking-tight">Now Serving</h1>
+        </div>
+      ),
+      []
+    );
 
 	return (
 		<Section>

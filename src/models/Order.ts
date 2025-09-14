@@ -58,11 +58,12 @@ export class OrderModel {
     });
   }
 
-  static async findActive(): Promise<Order[]> {
-    const orders = await db('orders')
-      .where({ hidden: false })
+  static async findActive(includeHidden = false): Promise<Order[]> {
+    const ordersQuery = db('orders')
       .whereNot({ status: 'finished' })
       .orderBy('number', 'desc');
+    if (!includeHidden) (ordersQuery as any).andWhere({ hidden: false });
+    const orders = await ordersQuery;
     const ids = orders.map((o) => o.id);
     const items = await db('order_items').whereIn('order_id', ids);
     const byOrder = items.reduce<Record<string, OrderItem[]>>((acc, it) => {
@@ -72,11 +73,13 @@ export class OrderModel {
     return orders.map((o) => ({ ...o, items: byOrder[o.id] || [] }));
   }
 
-  static async findFinished(): Promise<Order[]> {
-    const orders = await db('orders')
-      .where({ status: 'finished', hidden: false })
+  static async findFinished(includeHidden = false): Promise<Order[]> {
+    const ordersQuery = db('orders')
+      .where({ status: 'finished' })
       .orderBy('number', 'desc')
       .limit(50);
+    if (!includeHidden) (ordersQuery as any).andWhere({ hidden: false });
+    const orders = await ordersQuery;
     const ids = orders.map((o) => o.id);
     const items = await db('order_items').whereIn('order_id', ids);
     const byOrder = items.reduce<Record<string, OrderItem[]>>((acc, it) => {

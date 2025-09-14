@@ -70,8 +70,9 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
         ...options,
       });
       if (!res.ok) {
+        // Do not failover to other bases on HTTP errors (e.g., 429/404).
         lastErr = new Error(`Orders API error: ${res.status}`);
-        continue;
+        break;
       }
       return (res.status === 204 ? null : await res.json()) as T;
     } catch (err) {
@@ -84,26 +85,28 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
 
 export const ordersApi = {
   // Return active orders (not finished)
-  async getActive(): Promise<Order[]> {
+  async getActive(includeHidden = false): Promise<Order[]> {
     try {
       // If backend exists:
-      return await fetchApi<Order[]>('/api/orders?status=active');
+      const q = includeHidden ? '&includeHidden=1' : '';
+      return await fetchApi<Order[]>(`/api/orders?status=active${q}`);
     } catch {
       const all = readLS();
       return all
-        .filter((o) => !o.hidden && o.status !== 'finished')
+        .filter((o) => (includeHidden ? true : !o.hidden) && o.status !== 'finished')
         .sort((a, b) => b.number - a.number);
     }
   },
 
   // Return finished orders (now with items)
-  async getFinished(): Promise<Order[]> {
+  async getFinished(includeHidden = false): Promise<Order[]> {
     try {
-      return await fetchApi<Order[]>('/api/orders?status=finished');
+      const q = includeHidden ? '&includeHidden=1' : '';
+      return await fetchApi<Order[]>(`/api/orders?status=finished${q}`);
     } catch {
       const all = readLS();
       return all
-        .filter((o) => !o.hidden && o.status === 'finished')
+        .filter((o) => (includeHidden ? true : !o.hidden) && o.status === 'finished')
         .sort((a, b) => b.number - a.number)
         .slice(0, 30);
     }
