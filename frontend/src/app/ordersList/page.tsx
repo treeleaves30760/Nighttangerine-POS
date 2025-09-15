@@ -78,46 +78,107 @@ export default function OrdersListPage() {
     document.body.removeChild(link);
   };
 
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const text = e.target?.result as string;
-      const lines = text.split("\n");
+      const lines = text.split("\n").filter(line => line.trim());
       const importedOrders: Order[] = [];
+
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].match(/("[^"\\]*(?:\\.[^"\\]*)*"|[^",]+)/g);
-        if (!values || values.length < 5) continue;
-        const [id, number, status, createdAt, items] = values.map(v => v.startsWith('"') && v.endsWith('"') ? v.slice(1, -1) : v);
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // Parse CSV line manually to handle quoted JSON properly
+        const values: string[] = [];
+        let current = "";
+        let inQuotes = false;
+        let j = 0;
+
+        while (j < line.length) {
+          const char = line[j];
+          const nextChar = line[j + 1];
+
+          if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+              // Escaped quote inside quoted field
+              current += '"';
+              j += 2;
+            } else {
+              // Start or end of quoted field
+              inQuotes = !inQuotes;
+              j++;
+            }
+          } else if (char === ',' && !inQuotes) {
+            // Field separator
+            values.push(current);
+            current = "";
+            j++;
+          } else {
+            current += char;
+            j++;
+          }
+        }
+
+        // Add the last field
+        values.push(current);
+
+        if (values.length < 5) continue;
+
+        const [id, number, status, createdAt, items] = values;
+
         try {
           importedOrders.push({
             id,
             number: parseInt(number),
             status: status as OrderStatus,
             createdAt: new Date(createdAt).toISOString(),
-            items: JSON.parse(items.replace(/""/g, '"')),
+            items: JSON.parse(items),
           });
         } catch (error) {
-          console.error("Error parsing line:", lines[i], error);
+          console.error("Error parsing line:", line, error);
         }
       }
-      setOrders(prev => [...prev, ...importedOrders].sort((a, b) => b.number - a.number));
+
+      console.log("Parsed orders from CSV:", importedOrders.length);
+      console.log("Sample order:", importedOrders[0]);
+
+      try {
+        // Use the bulk import API to save to database
+        const savedOrders = await ordersApi.bulkImport(importedOrders);
+        console.log("API response - saved orders:", savedOrders.length);
+
+        // Refresh the orders list to show the imported data from database
+        const [active, finished] = await Promise.all([
+          ordersApi.getActive(true),
+          ordersApi.getFinished(true),
+        ]);
+        const merged = [...active, ...finished].sort((a, b) => b.number - a.number);
+        setOrders(merged);
+
+        console.log(`Successfully imported ${savedOrders.length} orders`);
+      } catch (error) {
+        console.error("Error importing orders:", error);
+        // Fallback to local state update if API fails
+        setOrders(prev => [...prev, ...importedOrders].sort((a, b) => b.number - a.number));
+      }
     };
     reader.readAsText(file);
   };
 
   return (
-    <Section>
+    <Section className="text-[18px] md:text-[20px]">
       <OrdersAnalysis orders={orders} />
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Orders List</CardTitle>
+            <CardTitle className="text-3xl">Orders List</CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExport}>Export</Button>
-              <Button variant="outline" onClick={() => document.getElementById('import-input')?.click()}>Import</Button>
+              <Button variant="outline" onClick={handleExport} className="text-base md:text-lg">Export</Button>
+              <Button variant="outline" onClick={() => document.getElementById('import-input')?.click()} className="text-base md:text-lg">Import</Button>
               <input type="file" id="import-input" accept=".csv" style={{ display: 'none' }} onChange={handleImport} />
             </div>
           </div>
@@ -128,7 +189,7 @@ export default function OrdersListPage() {
           ) : orders.length === 0 ? (
             <p className="text-muted-foreground">No orders found.</p>
           ) : (
-            <Table>
+            <Table className="text-xl">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-24">#</TableHead>
@@ -141,10 +202,10 @@ export default function OrdersListPage() {
               </TableHeader>
               <TableBody>
                 {orders.map((o) => (
-                  <TableRow key={o.id} className={cn(o.status === "finished" && "opacity-80")}>
-                    <TableCell className="font-medium">{o.number}</TableCell>
+                  <TableRow key={o.id} className={cn(o.status === "finished" && "opacity-80")}> 
+                    <TableCell className="font-semibold">{o.number}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center rounded px-2 py-0.5 text-xs capitalize bg-muted/40">
+                      <span className="inline-flex items-center rounded px-2 py-0.5 text-lg capitalize bg-muted/40">
                         {o.status}
                       </span>
                     </TableCell>
@@ -154,9 +215,9 @@ export default function OrdersListPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {o.status !== "finished" && (
-                          <Button variant="secondary" size="sm" onClick={() => markFinished(o.id)}>Mark Finished</Button>
+                          <Button variant="secondary" size="sm" onClick={() => markFinished(o.id)} className="text-base md:text-lg">Mark Finished</Button>
                         )}
-                        <Button variant="destructive" size="sm" onClick={() => removeOrder(o.id)}>Delete</Button>
+                        <Button variant="destructive" size="sm" onClick={() => removeOrder(o.id)} className="text-base md:text-lg">Delete</Button>
                       </div>
                     </TableCell>
                   </TableRow>

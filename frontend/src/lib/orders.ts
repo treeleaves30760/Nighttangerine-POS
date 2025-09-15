@@ -164,4 +164,39 @@ export const ordersApi = {
       }
     }
   },
+
+  // Bulk import orders
+  async bulkImport(orders: Order[]): Promise<Order[]> {
+    try {
+      // Transform orders to match the backend ImportOrderData structure
+      const importData = orders.map(order => ({
+        id: order.id,
+        number: order.number,
+        status: order.status,
+        createdAt: order.createdAt,
+        items: order.items.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      }));
+
+      console.log("Sending to API:", { orders: importData });
+
+      const response = await fetchApi<{ imported: number; orders: Order[] }>('/api/orders/import', {
+        method: 'POST',
+        body: JSON.stringify({ orders: importData }),
+      });
+      return response.orders;
+    } catch (error) {
+      console.error("API import failed:", error);
+      // Fallback to local storage for demo
+      const all = readLS();
+      const newOrders = orders.filter(order => !all.find(existing => existing.id === order.id));
+      const updated = [...all, ...newOrders];
+      writeLS(updated);
+      return newOrders;
+    }
+  },
 };

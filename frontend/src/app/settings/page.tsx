@@ -160,11 +160,11 @@ export default function SettingsPage() {
 		draft.category.trim();
 
 	return (
-		<Section>
+		<Section className="text-[18px] md:text-[20px]">
 			{/* Customer Display settings */}
 			<Card className="mb-6">
 				<CardHeader>
-					<CardTitle>Customer Display</CardTitle>
+					<CardTitle className="text-3xl">Customer Display</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="flex items-center gap-3">
@@ -226,6 +226,7 @@ export default function SettingsPage() {
 								}
 							}}
 							disabled={savingDisplay}
+							className="text-lg md:text-xl"
 						>
 							{savingDisplay ? "Saving..." : "Save Display Settings"}
 						</Button>
@@ -238,12 +239,13 @@ export default function SettingsPage() {
 					<Card>
 						<CardHeader>
 							<div className="flex items-center justify-between">
-								<CardTitle>Menu Items</CardTitle>
+								<CardTitle className="text-3xl">Menu Items</CardTitle>
 								<div className="w-64">
 									<Input
 										placeholder="Search items..."
 										value={filter}
 										onChange={(e) => setFilter(e.target.value)}
+										className="text-lg md:text-xl"
 									/>
 								</div>
 							</div>
@@ -253,7 +255,7 @@ export default function SettingsPage() {
 								<p className="text-muted-foreground">No products.</p>
 							) : (
 								<div className="w-full overflow-x-auto">
-									<Table>
+									<Table className="text-xl">
 										<TableHeader>
 											<TableRow>
 												<TableHead className="w-[34%]">Name</TableHead>
@@ -296,6 +298,7 @@ export default function SettingsPage() {
 																size="sm"
 																variant="secondary"
 																onClick={() => onEdit(p)}
+																className="text-base md:text-lg"
 															>
 																Edit
 															</Button>
@@ -303,6 +306,7 @@ export default function SettingsPage() {
 																size="sm"
 																variant="secondary"
 																onClick={() => toggle(p.id)}
+																className="text-base md:text-lg"
 															>
 																{!p.hidden ? "Hide" : "Show"}
 															</Button>
@@ -310,6 +314,7 @@ export default function SettingsPage() {
 																size="sm"
 																variant="destructive"
 																onClick={() => remove(p.id)}
+																className="text-base md:text-lg"
 															>
 																Delete
 															</Button>
@@ -327,7 +332,7 @@ export default function SettingsPage() {
 				<div className="lg:col-span-1">
 					<Card>
 						<CardHeader>
-							<CardTitle>{editing ? "Edit Item" : "Add Item"}</CardTitle>
+							<CardTitle className="text-3xl">{editing ? "Edit Item" : "Add Item"}</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-3">
 							<div>
@@ -337,6 +342,7 @@ export default function SettingsPage() {
 									onChange={(e) =>
 										setDraft((d) => ({ ...d, name: e.target.value }))
 									}
+									className="text-lg md:text-xl"
 								/>
 							</div>
 							<div>
@@ -348,6 +354,7 @@ export default function SettingsPage() {
 									onChange={(e) =>
 										setDraft((d) => ({ ...d, price: e.target.value }))
 									}
+									className="text-lg md:text-xl"
 								/>
 							</div>
 							<div>
@@ -357,6 +364,7 @@ export default function SettingsPage() {
 									onChange={(e) =>
 										setDraft((d) => ({ ...d, category: e.target.value }))
 									}
+									className="text-lg md:text-xl"
 								/>
 							</div>
 							<div>
@@ -367,6 +375,7 @@ export default function SettingsPage() {
 									onChange={(e) =>
 										setDraft((d) => ({ ...d, amount: e.target.value }))
 									}
+									className="text-lg md:text-xl"
 								/>
 							</div>
 							<div>
@@ -377,6 +386,7 @@ export default function SettingsPage() {
 									onChange={(e) =>
 										setDraft((d) => ({ ...d, imageUrl: e.target.value }))
 									}
+									className="text-lg md:text-xl"
 								/>
 								{draft.imageUrl && (
 									<div className="mt-2 rounded-md overflow-hidden border">
@@ -391,11 +401,11 @@ export default function SettingsPage() {
 							</div>
 							<div className="flex items-center justify-end gap-2 pt-2">
 								{editing && (
-									<Button variant="secondary" onClick={reset}>
+									<Button variant="secondary" onClick={reset} className="text-base md:text-lg">
 										Cancel
 									</Button>
 								)}
-								<Button onClick={submit} disabled={!canSubmit || loading}>
+								<Button onClick={submit} disabled={!canSubmit || loading} className="text-base md:text-lg">
 									{loading ? "Saving..." : "Save"}
 								</Button>
 							</div>

@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import OrderModel, { CreateOrderItem } from "../models/Order";
+import OrderModel, { CreateOrderItem, ImportOrderData } from "../models/Order";
 
 const router: Router = express.Router();
 
@@ -112,6 +112,48 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error("Error deleting order:", err);
     return res.status(500).json({ error: "Failed to delete order" });
+  }
+});
+
+// POST /api/orders/import
+router.post("/import", async (req, res) => {
+  try {
+    console.log("Import request body:", JSON.stringify(req.body, null, 2));
+
+    const orders: ImportOrderData[] = Array.isArray(req.body?.orders)
+      ? req.body.orders
+      : [];
+
+    console.log("Parsed orders array length:", orders.length);
+    if (orders.length > 0) {
+      console.log("Sample order:", JSON.stringify(orders[0], null, 2));
+    }
+
+    if (orders.length === 0)
+      return res.status(400).json({ error: "Orders array is required" });
+
+    const imported = await OrderModel.bulkImport(orders);
+
+    console.log("Successfully imported:", imported.length, "orders");
+
+    return res.status(201).json({
+      imported: imported.length,
+      orders: imported.map((order) => ({
+        id: order.id,
+        number: order.number,
+        status: order.status,
+        createdAt: order.created_at,
+        items: (order.items || []).map((i) => ({
+          productId: i.product_id,
+          name: i.name,
+          price: Number(i.price),
+          quantity: i.quantity,
+        })),
+      })),
+    });
+  } catch (err) {
+    console.error("Error importing orders:", err);
+    return res.status(500).json({ error: "Failed to import orders" });
   }
 });
 

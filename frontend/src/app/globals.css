@@ -70,3 +70,18 @@
     @apply font-semibold;
   }
 }
+
+@layer utilities {
+  @keyframes marquee {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee linear infinite;
+  }
+}

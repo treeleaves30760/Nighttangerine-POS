@@ -101,17 +101,18 @@ export default function SellsPage() {
 	);
 
 	return (
-		<Section className="h-[80vh] flex flex-col py-6">
+		<Section className="h-[80vh] flex flex-col py-6 text-[18px] md:text-[20px]">
 			<div className="grid grid-cols-3 gap-6 h-full">
 				<Card className="flex flex-col h-full">
 					<CardHeader>
 						<div className="flex items-center justify-between">
-							<CardTitle>Make an Order</CardTitle>
+							<CardTitle className="text-3xl">Make an Order</CardTitle>
 							<div className="w-56">
 								<Input
 									placeholder="Search menu..."
 									value={filter}
 									onChange={(e) => setFilter(e.target.value)}
+									className="text-lg md:text-xl"
 								/>
 							</div>
 						</div>
@@ -127,14 +128,14 @@ export default function SellsPage() {
 										onClick={() => addToCart(p)}
 										className="rounded-md border overflow-hidden hover:ring-2 hover:ring-primary focus:ring-2 focus:ring-primary"
 									>
-										<div className="flex h-full flex-col items-center justify-between p-3">
-											<div
-												className="truncate font-medium text-2xl"
-												title={p.name}
-											>
-												{p.name}
-											</div>
-											<div className="mt-2 flex items-center gap-2 text-2xl">
+									<div className="flex h-full flex-col items-center justify-between p-3">
+										<div
+											className="truncate font-semibold text-base md:text-lg"
+											title={p.name}
+										>
+											{p.name}
+										</div>
+										<div className="mt-2 flex items-center gap-2 text-sm md:text-base">
 												{p.amount && (
 													<span className="inline-block rounded bg-muted/40 px-2 py-0.5">
 														{p.amount}
@@ -153,7 +154,7 @@ export default function SellsPage() {
 				</Card>
 				<Card className="flex flex-col">
 					<CardHeader>
-						<CardTitle>Cart</CardTitle>
+						<CardTitle className="text-3xl">Cart</CardTitle>
 					</CardHeader>
 					<CardContent className="overflow-y-auto">
 						{cart.length === 0 ? (
@@ -180,7 +181,7 @@ export default function SellsPage() {
 											<Input
 												type="number"
 												min={1}
-												className="w-20"
+												className="w-24 text-xl"
 												value={i.quantity}
 												onChange={(e) =>
 													updateQty(i.product.id, Number(e.target.value || 1))
@@ -189,6 +190,7 @@ export default function SellsPage() {
 											<Button
 												variant="secondary"
 												onClick={() => removeFromCart(i.product.id)}
+												className="text-lg md:text-xl"
 											>
 												Remove
 											</Button>
@@ -205,6 +207,7 @@ export default function SellsPage() {
 									<Button
 										onClick={placeOrder}
 										disabled={placing || cart.length === 0}
+										className="text-lg md:text-xl"
 									>
 										{placing ? "Placing..." : "Place Order"}
 									</Button>
@@ -215,7 +218,7 @@ export default function SellsPage() {
 				</Card>
 				<Card className="flex flex-col">
 					<CardHeader>
-						<CardTitle>Orders</CardTitle>
+						<CardTitle className="text-3xl">Orders</CardTitle>
 					</CardHeader>
 					<CardContent className="overflow-y-auto">
 						{activeOrders.length === 0 ? (
@@ -251,6 +254,7 @@ export default function SellsPage() {
 												<Button
 													variant="secondary"
 													onClick={() => markFinished(o.id)}
+													className="text-lg md:text-xl"
 												>
 													Mark Finished
 												</Button>
@@ -258,6 +262,7 @@ export default function SellsPage() {
 											<Button
 												variant="destructive"
 												onClick={() => removeOrder(o.id)}
+												className="text-lg md:text-xl"
 											>
 												Remove
 											</Button>

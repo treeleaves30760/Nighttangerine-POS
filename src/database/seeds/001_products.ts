@@ -60,5 +60,13 @@ export async function seed(knex: Knex): Promise<void> {
       hidden: false,
       available: true,
     },
+    {
+      name: "瑪格小披薩",
+      price: 40,
+      category: "Food",
+      amount: "2個",
+      hidden: false,
+      available: true,
+    },
   ]);
 }
