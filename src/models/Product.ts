@@ -1,7 +1,9 @@
-import knex from 'knex';
-import config from '../config/database';
+import knex from "knex";
+import config from "../config/database";
 
-const db = knex(config[process.env['NODE_ENV'] as keyof typeof config] || config.development);
+const db = knex(
+  config[process.env["NODE_ENV"] as keyof typeof config] || config.development,
+);
 
 export interface Product {
   id: string;
@@ -38,24 +40,27 @@ export interface UpdateProductData {
 
 export class ProductModel {
   static async findAll(): Promise<Product[]> {
-    return db('products').select('*').orderBy('category').orderBy('name');
+    return db("products").select("*").orderBy("category").orderBy("name");
   }
 
   static async findById(id: string): Promise<Product | undefined> {
-    return db('products').where({ id }).first();
+    return db("products").where({ id }).first();
   }
 
   static async findByCategory(category: string): Promise<Product[]> {
-    return db('products').where({ category }).orderBy('name');
+    return db("products").where({ category }).orderBy("name");
   }
 
   static async findAvailable(): Promise<Product[]> {
     // Treat hidden=false as available; keep compatibility with existing endpoint
-    return db('products').where({ hidden: false }).orderBy('category').orderBy('name');
+    return db("products")
+      .where({ hidden: false })
+      .orderBy("category")
+      .orderBy("name");
   }
 
   static async create(data: CreateProductData): Promise<Product> {
-    const [product] = await db('products')
+    const [product] = await db("products")
       .insert({
         name: data.name,
         price: data.price,
@@ -65,33 +70,39 @@ export class ProductModel {
         available: data.available ?? true,
         image_url: data.image_url ?? null,
       })
-      .returning('*');
+      .returning("*");
     return product;
   }
 
-  static async update(id: string, data: UpdateProductData): Promise<Product | null> {
+  static async update(
+    id: string,
+    data: UpdateProductData,
+  ): Promise<Product | null> {
     const updates: Record<string, any> = {
       updated_at: new Date(),
     };
-    if (data.name !== undefined) updates['name'] = data.name;
-    if (data.price !== undefined) updates['price'] = data.price;
-    if (data.category !== undefined) updates['category'] = data.category;
-    if (data.amount !== undefined) updates['amount'] = data.amount;
-    if (data.hidden !== undefined) updates['hidden'] = data.hidden;
-    if (data.available !== undefined) updates['available'] = data.available;
-    if (data.image_url !== undefined) updates['image_url'] = data.image_url;
+    if (data.name !== undefined) updates["name"] = data.name;
+    if (data.price !== undefined) updates["price"] = data.price;
+    if (data.category !== undefined) updates["category"] = data.category;
+    if (data.amount !== undefined) updates["amount"] = data.amount;
+    if (data.hidden !== undefined) updates["hidden"] = data.hidden;
+    if (data.available !== undefined) updates["available"] = data.available;
+    if (data.image_url !== undefined) updates["image_url"] = data.image_url;
 
-    const [product] = await db('products').where({ id }).update(updates).returning('*');
+    const [product] = await db("products")
+      .where({ id })
+      .update(updates)
+      .returning("*");
     return product || null;
   }
 
   static async delete(id: string): Promise<boolean> {
-    const deletedRows = await db('products').where({ id }).del();
+    const deletedRows = await db("products").where({ id }).del();
     return deletedRows > 0;
   }
 
   static async hasOrderReferences(id: string): Promise<boolean> {
-    const ref = await db('order_items').where({ product_id: id }).first();
+    const ref = await db("order_items").where({ product_id: id }).first();
     return Boolean(ref);
   }
 

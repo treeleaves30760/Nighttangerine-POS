@@ -1,5 +1,5 @@
-import type { Knex } from 'knex';
-import dotenv from 'dotenv';
+import type { Knex } from "knex";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -10,40 +10,45 @@ interface DatabaseConfig {
 }
 
 const getConnectionConfig = () => {
-  const useLocal = process.env['DB_USE_LOCAL'] === 'true';
-  
+  const useLocal = process.env["DB_USE_LOCAL"] === "true";
+
   if (useLocal) {
     return {
-      host: process.env['DB_HOST'] || 'db',
-      port: parseInt(process.env['DB_PORT'] || '5432'),
-      user: process.env['DB_USER'] || 'postgres',
-      password: process.env['DB_PASSWORD'] || 'postgres',
-      database: process.env['DB_NAME'] || 'nighttangerine_pos',
+      host: process.env["DB_HOST"] || "db",
+      port: parseInt(process.env["DB_PORT"] || "5432"),
+      user: process.env["DB_USER"] || "postgres",
+      password: process.env["DB_PASSWORD"] || "postgres",
+      database: process.env["DB_NAME"] || "nighttangerine_pos",
     };
   } else {
-    const remoteHost = process.env['REMOTE_DB_HOST'];
-    const remoteUser = process.env['REMOTE_DB_USER'];
-    const remotePassword = process.env['REMOTE_DB_PASSWORD'];
-    
+    const remoteHost = process.env["REMOTE_DB_HOST"];
+    const remoteUser = process.env["REMOTE_DB_USER"];
+    const remotePassword = process.env["REMOTE_DB_PASSWORD"];
+
     if (!remoteHost || !remoteUser || !remotePassword) {
-      throw new Error('Remote database credentials are required when DB_USE_LOCAL is false');
+      throw new Error(
+        "Remote database credentials are required when DB_USE_LOCAL is false",
+      );
     }
-    
+
     return {
       host: remoteHost,
-      port: parseInt(process.env['REMOTE_DB_PORT'] || '5432'),
+      port: parseInt(process.env["REMOTE_DB_PORT"] || "5432"),
       user: remoteUser,
       password: remotePassword,
-      database: process.env['REMOTE_DB_NAME'] || 'nighttangerine_pos',
-      ssl: process.env['DB_SSL_MODE'] === 'require' ? { rejectUnauthorized: false } : false,
+      database: process.env["REMOTE_DB_NAME"] || "nighttangerine_pos",
+      ssl:
+        process.env["DB_SSL_MODE"] === "require"
+          ? { rejectUnauthorized: false }
+          : false,
     };
   }
 };
 
 const config: DatabaseConfig = {
   development: {
-    client: 'postgresql',
-    connection: process.env['DATABASE_URL'] || getConnectionConfig(),
+    client: "postgresql",
+    connection: process.env["DATABASE_URL"] || getConnectionConfig(),
     pool: {
       min: 2,
       max: 10,
@@ -55,17 +60,17 @@ const config: DatabaseConfig = {
       createRetryIntervalMillis: 100,
     },
     migrations: {
-      directory: './database/migrations',
-      tableName: 'knex_migrations',
+      directory: "./database/migrations",
+      tableName: "knex_migrations",
     },
     seeds: {
-      directory: './database/seeds',
+      directory: "./database/seeds",
     },
   },
 
   production: {
-    client: 'postgresql',
-    connection: process.env['DATABASE_URL'] || getConnectionConfig(),
+    client: "postgresql",
+    connection: process.env["DATABASE_URL"] || getConnectionConfig(),
     pool: {
       min: 5,
       max: 30,
@@ -77,33 +82,33 @@ const config: DatabaseConfig = {
       createRetryIntervalMillis: 100,
     },
     migrations: {
-      directory: './database/migrations',
-      tableName: 'knex_migrations',
+      directory: "./database/migrations",
+      tableName: "knex_migrations",
     },
     seeds: {
-      directory: './database/seeds',
+      directory: "./database/seeds",
     },
   },
 
   test: {
-    client: 'postgresql',
+    client: "postgresql",
     connection: {
-      host: process.env['TEST_DB_HOST'] || 'localhost',
-      port: parseInt(process.env['TEST_DB_PORT'] || '5432'),
-      user: process.env['TEST_DB_USER'] || 'postgres',
-      password: process.env['TEST_DB_PASSWORD'] || 'postgres',
-      database: process.env['TEST_DB_NAME'] || 'nighttangerine_pos_test',
+      host: process.env["TEST_DB_HOST"] || "localhost",
+      port: parseInt(process.env["TEST_DB_PORT"] || "5432"),
+      user: process.env["TEST_DB_USER"] || "postgres",
+      password: process.env["TEST_DB_PASSWORD"] || "postgres",
+      database: process.env["TEST_DB_NAME"] || "nighttangerine_pos_test",
     },
     pool: {
       min: 1,
       max: 5,
     },
     migrations: {
-      directory: './database/migrations',
-      tableName: 'knex_migrations',
+      directory: "./database/migrations",
+      tableName: "knex_migrations",
     },
     seeds: {
-      directory: './database/seeds',
+      directory: "./database/seeds",
     },
   },
 };

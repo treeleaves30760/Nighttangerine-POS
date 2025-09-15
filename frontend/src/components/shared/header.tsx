@@ -33,7 +33,7 @@ export function Header() {
           {isLoading && <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />} 
           {!isLoading && !user && (
             <Button asChild>
-              <a href="/api/auth/login">Sign In</a>
+              <Link href="/api/auth/login">Sign In</Link>
             </Button>
           )}
           {!isLoading && user && (
@@ -61,7 +61,7 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="text-red-500 hover:text-red-600 focus:text-red-600">
-                  <a href="/api/auth/logout">Logout -&gt;</a>
+                  <Link href="/api/auth/logout">Logout -&gt;</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

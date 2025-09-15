@@ -5,8 +5,9 @@ import { Section } from "@/components/shared/section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ordersApi, type Order } from "@/lib/orders";
+import { ordersApi, type Order, type OrderStatus } from "@/lib/orders";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { OrdersAnalysis } from "@/components/shared/orders-analysis";
 
 export default function OrdersListPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -60,11 +61,66 @@ export default function OrdersListPage() {
     }
   };
 
+  const handleExport = () => {
+    const csv = [
+      ["id", "number", "status", "createdAt", "items"].join(","),
+      ...orders.map(o => [o.id, o.number, o.status, o.createdAt, `"${JSON.stringify(o.items).replace(/"/g, '""')}"`].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "orders.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split("\n");
+      const importedOrders: Order[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].match(/("[^"\\]*(?:\\.[^"\\]*)*"|[^",]+)/g);
+        if (!values || values.length < 5) continue;
+        const [id, number, status, createdAt, items] = values.map(v => v.startsWith('"') && v.endsWith('"') ? v.slice(1, -1) : v);
+        try {
+          importedOrders.push({
+            id,
+            number: parseInt(number),
+            status: status as OrderStatus,
+            createdAt: new Date(createdAt).toISOString(),
+            items: JSON.parse(items.replace(/""/g, '"')),
+          });
+        } catch (error) {
+          console.error("Error parsing line:", lines[i], error);
+        }
+      }
+      setOrders(prev => [...prev, ...importedOrders].sort((a, b) => b.number - a.number));
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <Section>
+      <OrdersAnalysis orders={orders} />
       <Card>
         <CardHeader>
-          <CardTitle>Orders List</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Orders List</CardTitle>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExport}>Export</Button>
+              <Button variant="outline" onClick={() => document.getElementById('import-input')?.click()}>Import</Button>
+              <input type="file" id="import-input" accept=".csv" style={{ display: 'none' }} onChange={handleImport} />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -85,7 +141,7 @@ export default function OrdersListPage() {
               </TableHeader>
               <TableBody>
                 {orders.map((o) => (
-                  <TableRow key={o.id} className={cn(o.status === "finished" && "opacity-80")}> 
+                  <TableRow key={o.id} className={cn(o.status === "finished" && "opacity-80")}>
                     <TableCell className="font-medium">{o.number}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center rounded px-2 py-0.5 text-xs capitalize bg-muted/40">

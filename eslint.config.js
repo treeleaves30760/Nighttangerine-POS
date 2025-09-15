@@ -1,3 +1,4 @@
+import globals from "globals";
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
@@ -15,6 +16,9 @@ export default [
         sourceType: 'module',
         project: './tsconfig.json',
       },
+      globals: {
+        ...globals.node,
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint,
@@ -29,10 +33,21 @@ export default [
     },
   },
   {
+    files: ['frontend/**/*.ts', 'frontend/**/*.tsx'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+    },
+  },
+  {
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
     },
   },
   {

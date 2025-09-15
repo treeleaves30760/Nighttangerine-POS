@@ -17,8 +17,9 @@
     --popover: 224 47% 11%;
     --popover-foreground: 220 13% 90%;
 
-    --primary: 243 79% 65%; /* #4F46E5 */
-    --primary-foreground: 220 13% 90%;
+    /* Brand primary: Orange #FF8833 */
+    --primary: 25 100% 60%; /* #FF8833 */
+    --primary-foreground: 0 0% 100%; /* White for contrast */
 
     --secondary: 188 95% 42%; /* #06B6D4 */
     --secondary-foreground: 220 13% 90%;
@@ -26,19 +27,20 @@
     --muted: 215 20% 65%; /* #9CA3AF */
     --muted-foreground: 215 20% 65%;
 
-    --accent: 188 95% 42%;
+    /* Align accent with brand */
+    --accent: 25 100% 60%; /* #FF8833 */
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
     --input: 0 0% 100% / 0.08;
-    --ring: 243 79% 65%;
+    --ring: 25 100% 60%; /* #FF8833 */
 
     --radius: 12px;
 
-    --brand: 243 79% 65%;
-    --brand-muted: 242 89% 69%; /* #6366F1 */
+    --brand: 25 100% 60%; /* #FF8833 */
+    --brand-muted: 25 100% 70%; /* #FFAA66 */
   }
 
   .dark {

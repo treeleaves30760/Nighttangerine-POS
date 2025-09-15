@@ -1,15 +1,17 @@
-import express, { Router } from 'express';
-import OrderModel, { CreateOrderItem } from '../models/Order';
+import express, { Router } from "express";
+import OrderModel, { CreateOrderItem } from "../models/Order";
 
 const router: Router = express.Router();
 
 // GET /api/orders?status=active|finished
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    const status = String(req.query['status'] || 'active');
-    const includeHidden = String(req.query['includeHidden'] || '').toLowerCase();
-    const withHidden = includeHidden === '1' || includeHidden === 'true';
-    if (status === 'finished') {
+    const status = String(req.query["status"] || "active");
+    const includeHidden = String(
+      req.query["includeHidden"] || "",
+    ).toLowerCase();
+    const withHidden = includeHidden === "1" || includeHidden === "true";
+    if (status === "finished") {
       // Finished with items for clerk view
       const orders = await OrderModel.findFinished(withHidden);
       return res.json(
@@ -18,8 +20,13 @@ router.get('/', async (req, res) => {
           number: o.number,
           status: o.status,
           createdAt: o.created_at,
-          items: (o.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
-        }))
+          items: (o.items || []).map((i) => ({
+            productId: i.product_id,
+            name: i.name,
+            price: Number(i.price),
+            quantity: i.quantity,
+          })),
+        })),
       );
     }
     // active = not finished, with items
@@ -30,63 +37,81 @@ router.get('/', async (req, res) => {
         number: o.number,
         status: o.status,
         createdAt: o.created_at,
-        items: (o.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
-      }))
+        items: (o.items || []).map((i) => ({
+          productId: i.product_id,
+          name: i.name,
+          price: Number(i.price),
+          quantity: i.quantity,
+        })),
+      })),
     );
   } catch (err) {
-    console.error('Error fetching orders:', err);
-    return res.status(500).json({ error: 'Failed to fetch orders' });
+    console.error("Error fetching orders:", err);
+    return res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
 
 // POST /api/orders
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const items: CreateOrderItem[] = Array.isArray(req.body?.items) ? req.body.items : [];
-    if (items.length === 0) return res.status(400).json({ error: 'Items are required' });
+    const items: CreateOrderItem[] = Array.isArray(req.body?.items)
+      ? req.body.items
+      : [];
+    if (items.length === 0)
+      return res.status(400).json({ error: "Items are required" });
     const created = await OrderModel.create(items);
     return res.status(201).json({
       id: created.id,
       number: created.number,
       status: created.status,
       createdAt: created.created_at,
-      items: (created.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
+      items: (created.items || []).map((i) => ({
+        productId: i.product_id,
+        name: i.name,
+        price: Number(i.price),
+        quantity: i.quantity,
+      })),
     });
   } catch (err) {
-    console.error('Error creating order:', err);
-    return res.status(500).json({ error: 'Failed to create order' });
+    console.error("Error creating order:", err);
+    return res.status(500).json({ error: "Failed to create order" });
   }
 });
 
 // PATCH /api/orders/:id/finish
-router.patch('/:id/finish', async (req, res) => {
+router.patch("/:id/finish", async (req, res) => {
   try {
     const { id } = req.params;
     const updated = await OrderModel.markFinished(id);
-    if (!updated) return res.status(404).json({ error: 'Order not found' });
+    if (!updated) return res.status(404).json({ error: "Order not found" });
     return res.json({
       id: updated.id,
       number: updated.number,
       status: updated.status,
       createdAt: updated.created_at,
-      items: (updated.items || []).map((i) => ({ productId: i.product_id, name: i.name, price: Number(i.price), quantity: i.quantity })),
+      items: (updated.items || []).map((i) => ({
+        productId: i.product_id,
+        name: i.name,
+        price: Number(i.price),
+        quantity: i.quantity,
+      })),
     });
   } catch (err) {
-    console.error('Error finishing order:', err);
-    return res.status(500).json({ error: 'Failed to finish order' });
+    console.error("Error finishing order:", err);
+    return res.status(500).json({ error: "Failed to finish order" });
   }
 });
 
 // DELETE /api/orders/:id
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const ok = await OrderModel.delete(id);
-    if (!ok) return res.status(404).json({ error: 'Order not found' });
+    if (!ok) return res.status(404).json({ error: "Order not found" });
     return res.status(204).send();
   } catch (err) {
-    console.error('Error deleting order:', err);
-    return res.status(500).json({ error: 'Failed to delete order' });
+    console.error("Error deleting order:", err);
+    return res.status(500).json({ error: "Failed to delete order" });
   }
 });
 
