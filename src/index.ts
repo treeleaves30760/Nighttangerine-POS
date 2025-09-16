@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import productsRouter from "./routes/products";
 import ordersRouter from "./routes/orders";
+import { initWebSocket } from "./realtime";
 
 dotenv.config();
 
@@ -92,8 +93,11 @@ app.use("*", (req, res) => {
   });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Nighttangerine POS Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env["NODE_ENV"] || "development"}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
 });
+
+// Attach WebSocket server
+initWebSocket(server);

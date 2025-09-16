@@ -1,6 +1,5 @@
 import knex from "knex";
 import dbConfig from "../config/database";
-import ProductModel from "./Product";
 
 const db = knex(
   dbConfig[process.env["NODE_ENV"] as keyof typeof dbConfig] ||

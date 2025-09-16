@@ -1,5 +1,6 @@
 import express, { Router } from "express";
 import OrderModel, { CreateOrderItem, ImportOrderData } from "../models/Order";
+import { broadcastOrders } from "../realtime";
 
 const router: Router = express.Router();
 
@@ -60,7 +61,7 @@ router.post("/", async (req, res) => {
     if (items.length === 0)
       return res.status(400).json({ error: "Items are required" });
     const created = await OrderModel.create(items);
-    return res.status(201).json({
+    const response = {
       id: created.id,
       number: created.number,
       status: created.status,
@@ -71,7 +72,10 @@ router.post("/", async (req, res) => {
         price: Number(i.price),
         quantity: i.quantity,
       })),
-    });
+    };
+    // Notify listeners
+    broadcastOrders().catch(() => {});
+    return res.status(201).json(response);
   } catch (err) {
     console.error("Error creating order:", err);
     return res.status(500).json({ error: "Failed to create order" });
@@ -84,7 +88,7 @@ router.patch("/:id/finish", async (req, res) => {
     const { id } = req.params;
     const updated = await OrderModel.markFinished(id);
     if (!updated) return res.status(404).json({ error: "Order not found" });
-    return res.json({
+    const response = {
       id: updated.id,
       number: updated.number,
       status: updated.status,
@@ -95,7 +99,10 @@ router.patch("/:id/finish", async (req, res) => {
         price: Number(i.price),
         quantity: i.quantity,
       })),
-    });
+    };
+    // Notify listeners
+    broadcastOrders().catch(() => {});
+    return res.json(response);
   } catch (err) {
     console.error("Error finishing order:", err);
     return res.status(500).json({ error: "Failed to finish order" });
@@ -108,6 +115,8 @@ router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     const ok = await OrderModel.delete(id);
     if (!ok) return res.status(404).json({ error: "Order not found" });
+    // Notify listeners
+    broadcastOrders().catch(() => {});
     return res.status(204).send();
   } catch (err) {
     console.error("Error deleting order:", err);
@@ -136,7 +145,7 @@ router.post("/import", async (req, res) => {
 
     console.log("Successfully imported:", imported.length, "orders");
 
-    return res.status(201).json({
+    const response = {
       imported: imported.length,
       orders: imported.map((order) => ({
         id: order.id,
@@ -150,7 +159,10 @@ router.post("/import", async (req, res) => {
           quantity: i.quantity,
         })),
       })),
-    });
+    };
+    // Notify listeners
+    broadcastOrders().catch(() => {});
+    return res.status(201).json(response);
   } catch (err) {
     console.error("Error importing orders:", err);
     return res.status(500).json({ error: "Failed to import orders" });

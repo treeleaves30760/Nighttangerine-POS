@@ -5,26 +5,13 @@ import { Section } from "@/components/shared/section";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { productsApi } from "@/lib/api";
 import { ordersApi, type Order } from "@/lib/orders";
+import { useOrdersStream } from "@/lib/orders-ws";
 import { cn, formatCurrency } from "@/lib/utils";
 import { settingsApi, type DisplaySettings } from "@/lib/settings";
 import { Marquee } from "@/components/shared/marquee";
 
 function FinishedOrdersPanel() {
-	const [finished, setFinished] = useState<Order[]>([]);
-
-	useEffect(() => {
-		let mounted = true;
-		const load = async () => {
-			const data = await ordersApi.getFinished();
-			if (mounted) setFinished(data);
-		};
-		load();
-		const id = setInterval(load, 8000);
-		return () => {
-			mounted = false;
-			clearInterval(id);
-		};
-	}, []);
+    const { finished } = useOrdersStream();
 
 	return (
 		<Card className="border-none bg-white/70 dark:bg-white/5 backdrop-blur shadow-xl">
@@ -123,25 +110,7 @@ function MenuGrid() {
 }
 
 function PreparingOrdersPanel() {
-	const [preparing, setPreparing] = useState<Order[]>([]);
-	useEffect(() => {
-		let mounted = true;
-		const load = async () => {
-			try {
-				const active = await ordersApi.getActive();
-				const list = active.filter((o) => o.status === "preparing");
-				if (mounted) setPreparing(list);
-			} catch {
-				if (mounted) setPreparing([]);
-			}
-		};
-		load();
-		const id = setInterval(load, 8000);
-		return () => {
-			mounted = false;
-			clearInterval(id);
-		};
-	}, []);
+    const { preparing } = useOrdersStream();
 
 	return (
 		<Card className="border-none bg-white/70 dark:bg-white/5 backdrop-blur shadow-xl">
