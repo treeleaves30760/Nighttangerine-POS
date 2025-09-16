@@ -177,8 +177,8 @@ export default function OrdersListPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-3xl">Orders List</CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExport} className="text-base md:text-lg">Export</Button>
-              <Button variant="outline" onClick={() => document.getElementById('import-input')?.click()} className="text-base md:text-lg">Import</Button>
+              <Button variant="outline" onClick={handleExport}>Export</Button>
+              <Button variant="outline" onClick={() => document.getElementById('import-input')?.click()}>Import</Button>
               <input type="file" id="import-input" accept=".csv" style={{ display: 'none' }} onChange={handleImport} />
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function OrdersListPage() {
           ) : orders.length === 0 ? (
             <p className="text-muted-foreground">No orders found.</p>
           ) : (
-            <Table className="text-xl">
+            <Table className="text-[18px] md:text-[20px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-24">#</TableHead>
@@ -205,7 +205,7 @@ export default function OrdersListPage() {
                   <TableRow key={o.id} className={cn(o.status === "finished" && "opacity-80")}> 
                     <TableCell className="font-semibold">{o.number}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center rounded px-2 py-0.5 text-lg capitalize bg-muted/40">
+                      <span className="inline-flex items-center rounded px-2 py-0.5 capitalize bg-muted/40">
                         {o.status}
                       </span>
                     </TableCell>
@@ -215,9 +215,9 @@ export default function OrdersListPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {o.status !== "finished" && (
-                          <Button variant="secondary" size="sm" onClick={() => markFinished(o.id)} className="text-base md:text-lg">Mark Finished</Button>
+                          <Button variant="secondary" size="sm" onClick={() => markFinished(o.id)}>Mark Finished</Button>
                         )}
-                        <Button variant="destructive" size="sm" onClick={() => removeOrder(o.id)} className="text-base md:text-lg">Delete</Button>
+                        <Button variant="destructive" size="sm" onClick={() => removeOrder(o.id)}>Delete</Button>
                       </div>
                     </TableCell>
                   </TableRow>

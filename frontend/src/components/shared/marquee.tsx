@@ -12,12 +12,15 @@ type Props = {
 
 export function Marquee({ text, speed = 180, className, textClassName }: Props) {
   return (
-    <div className={cn("overflow-hidden", className)}>
+    <div className={cn("overflow-hidden scrollbar-hide", className)}>
       <FastMarquee
         speed={speed}
         gradient={false}
         pauseOnHover={false}
         pauseOnClick={false}
+        style={{
+          overflow: "hidden",
+        }}
       >
         <span className={cn("whitespace-nowrap", textClassName)}>
           {text}
