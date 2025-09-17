@@ -1,4 +1,4 @@
-# 🌙🍊 NightTangerine POS
+# NightTangerine POS
 
 A modern Point of Sale (POS) system built with React, Node.js, and PostgreSQL. Features real-time product management, authentication via Auth0, and a responsive design with a professional landing page and staff interface.
 

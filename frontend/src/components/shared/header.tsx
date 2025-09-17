@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { FullscreenToggle } from "@/components/shared/fullscreen-toggle";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -30,6 +31,7 @@ export function Header() {
 
         <div className="flex flex-1 items-center justify-end space-x-2">
           <ThemeToggle />
+          <FullscreenToggle />
           {isLoading && <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />} 
           {!isLoading && !user && (
             <Button asChild>

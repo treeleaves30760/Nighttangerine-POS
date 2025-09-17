@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { productsApi, type Product } from "@/lib/api";
+import { cartStorage } from "@/lib/cart-storage";
 import { ordersApi, type CreateOrderItem, type Order } from "@/lib/orders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +65,21 @@ export default function SellsPage() {
 		() => cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
 		[cart]
 	);
+
+	useEffect(() => {
+		cartStorage.set({
+			items: cart.map((i) => ({
+				productId: i.product.id,
+				name: i.product.name,
+				price: i.product.price,
+				quantity: i.quantity,
+				imageUrl: i.product.image_url ?? null,
+				amount: i.product.amount ?? null,
+			})),
+			total,
+			updatedAt: new Date().toISOString(),
+		});
+	}, [cart, total]);
 
 	const placeOrder = async () => {
 		if (cart.length === 0) return;
