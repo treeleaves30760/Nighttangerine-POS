@@ -14,6 +14,8 @@ export interface Product {
   amount?: string | null;
   hidden?: boolean;
   image_url?: string | null;
+  image_data?: Buffer | null;
+  image_mime_type?: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -26,6 +28,8 @@ export interface CreateProductData {
   hidden?: boolean;
   available?: boolean; // legacy
   image_url?: string | null;
+  image_data?: Buffer | null;
+  image_mime_type?: string | null;
 }
 
 export interface UpdateProductData {
@@ -36,6 +40,8 @@ export interface UpdateProductData {
   hidden?: boolean;
   available?: boolean; // legacy
   image_url?: string | null;
+  image_data?: Buffer | null;
+  image_mime_type?: string | null;
 }
 
 export class ProductModel {
@@ -69,6 +75,8 @@ export class ProductModel {
         hidden: data.hidden ?? false,
         available: data.available ?? true,
         image_url: data.image_url ?? null,
+        image_data: data.image_data ?? null,
+        image_mime_type: data.image_mime_type ?? null,
       })
       .returning("*");
     return product;
@@ -88,6 +96,9 @@ export class ProductModel {
     if (data.hidden !== undefined) updates["hidden"] = data.hidden;
     if (data.available !== undefined) updates["available"] = data.available;
     if (data.image_url !== undefined) updates["image_url"] = data.image_url;
+    if (data.image_data !== undefined) updates["image_data"] = data.image_data;
+    if (data.image_mime_type !== undefined)
+      updates["image_mime_type"] = data.image_mime_type;
 
     const [product] = await db("products")
       .where({ id })

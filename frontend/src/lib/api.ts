@@ -7,6 +7,7 @@ export interface Product {
   hidden?: boolean;
   available: boolean; // legacy compatibility
   image_url?: string | null;
+  has_image?: boolean;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -18,7 +19,9 @@ export interface CreateProductData {
   amount?: string | null;
   hidden?: boolean;
   available?: boolean; // legacy
-  image_url?: string | null; // persisted URL
+  image_url?: string | null; // legacy URL support
+  image_base64?: string | null;
+  image_mime_type?: string | null;
 }
 
 export interface UpdateProductData {
@@ -28,7 +31,9 @@ export interface UpdateProductData {
   amount?: string | null;
   hidden?: boolean;
   available?: boolean; // legacy
-  image_url?: string | null; // persisted URL
+  image_url?: string | null; // legacy URL support
+  image_base64?: string | null;
+  image_mime_type?: string | null;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';

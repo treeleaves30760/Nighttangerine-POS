@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
 	productsApi,
 	type Product,
@@ -28,7 +28,11 @@ type Draft = {
 	price: string;
 	category: string;
 	amount: string;
-	imageUrl: string; // stored in localStorage until backend supports it
+	imagePreview: string;
+	imageBase64: string | null;
+	imageMimeType: string | null;
+	imageDirty: boolean;
+	removeImage: boolean;
 };
 
 const empty: Draft = {
@@ -36,10 +40,14 @@ const empty: Draft = {
 	price: "",
 	category: "",
 	amount: "",
-	imageUrl: "",
+	imagePreview: "",
+	imageBase64: null,
+	imageMimeType: null,
+	imageDirty: false,
+	removeImage: false,
 };
 
-// Removed local image map; using persisted image_url in backend
+const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB safeguard
 
 export default function SettingsPage() {
 	const [products, setProducts] = useState<Product[]>([]);
@@ -73,13 +81,67 @@ export default function SettingsPage() {
 			price: String(p.price),
 			category: p.category,
 			amount: p.amount || "",
-			imageUrl: p.image_url || "",
+			imagePreview: p.image_url || "",
+			imageBase64: null,
+			imageMimeType: null,
+			imageDirty: false,
+			removeImage: false,
 		});
 	};
 
 	const reset = () => {
 		setEditing(null);
-		setDraft(empty);
+		setDraft({ ...empty });
+	};
+
+	const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		event.target.value = ""; // allow re-uploading the same file later
+		if (!file) {
+			return;
+		}
+
+		if (file.size > MAX_IMAGE_SIZE_BYTES) {
+			window.alert("Image is too large. Please choose a file under 4MB.");
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = () => {
+			const result = reader.result;
+			if (typeof result !== "string") {
+				window.alert("Unable to read image data.");
+				return;
+			}
+			const match = result.match(/^data:(.+);base64,(.+)$/);
+			if (!match) {
+				window.alert("Unsupported image format.");
+				return;
+			}
+			setDraft((d) => ({
+				...d,
+				imagePreview: result,
+				imageBase64: match[2],
+				imageMimeType: match[1],
+				imageDirty: true,
+				removeImage: false,
+			}));
+		};
+		reader.onerror = () => {
+			window.alert("Failed to read the selected image.");
+		};
+		reader.readAsDataURL(file);
+	};
+
+	const clearImage = () => {
+		setDraft((d) => ({
+			...d,
+			imagePreview: "",
+			imageBase64: null,
+			imageMimeType: null,
+			imageDirty: true,
+			removeImage: true,
+		}));
 	};
 
 	const submit = async () => {
@@ -90,18 +152,29 @@ export default function SettingsPage() {
 					name: draft.name.trim(),
 					price: Number(draft.price),
 					category: draft.category.trim(),
-					amount: draft.amount.trim() || null,
-					image_url: draft.imageUrl.trim() || null,
+					amount: draft.amount.trim() ? draft.amount.trim() : null,
 				};
+				if (draft.imageDirty) {
+					if (draft.removeImage) {
+						updates.image_base64 = null;
+						updates.image_mime_type = null;
+					} else if (draft.imageBase64) {
+						updates.image_base64 = draft.imageBase64;
+						updates.image_mime_type = draft.imageMimeType ?? null;
+					}
+				}
 				await productsApi.update(editing.id, updates);
 			} else {
 				const data: CreateProductData = {
 					name: draft.name.trim(),
 					price: Number(draft.price),
 					category: draft.category.trim(),
-					amount: draft.amount.trim() || null,
-					image_url: draft.imageUrl.trim() || null,
+					amount: draft.amount.trim() ? draft.amount.trim() : null,
 				};
+				if (draft.imageDirty && draft.imageBase64) {
+					data.image_base64 = draft.imageBase64;
+					data.image_mime_type = draft.imageMimeType ?? null;
+				}
 				await productsApi.create(data);
 			}
 			reset();
@@ -379,24 +452,32 @@ export default function SettingsPage() {
 								/>
 							</div>
 							<div>
-								<div className="text-xl mb-1">Image URL</div>
+								<div className="text-xl mb-1">Product Image</div>
 								<Input
-									placeholder="https://..."
-									value={draft.imageUrl}
-									onChange={(e) =>
-										setDraft((d) => ({ ...d, imageUrl: e.target.value }))
-									}
+									type="file"
+									accept="image/*"
+									onChange={handleImageChange}
 									className="text-lg md:text-xl"
 								/>
-								{draft.imageUrl && (
+								{draft.imagePreview && (
 									<div className="mt-2 rounded-md overflow-hidden border">
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
-											src={draft.imageUrl}
+											src={draft.imagePreview}
 											alt="preview"
 											className="w-full h-40 object-cover"
 										/>
 									</div>
+								)}
+								{draft.imagePreview && (
+									<Button
+										type="button"
+										variant="outline"
+										onClick={clearImage}
+										className="mt-2 text-base md:text-lg"
+									>
+										Remove image
+									</Button>
 								)}
 							</div>
 							<div className="flex items-center justify-end gap-2 pt-2">
@@ -410,7 +491,7 @@ export default function SettingsPage() {
 								</Button>
 							</div>
 							<p className="text-xl text-muted-foreground">
-								Note: Image URL is stored locally until backend supports it.
+								Images are persisted in the POS database. Upload a PNG or JPG up to 4MB.
 							</p>
 						</CardContent>
 					</Card>

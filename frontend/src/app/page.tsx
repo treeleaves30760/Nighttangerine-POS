@@ -179,35 +179,41 @@ function MenuShowcase() {
 												: "opacity-0 pointer-events-none"
 										)}
 									>
-										<div className="relative flex-1">
-											{item.image_url ? (
-												// eslint-disable-next-line @next/next/no-img-element
-												<img
-													src={item.image_url}
-													alt={item.name}
-													className="h-full w-full object-cover"
-												/>
-											) : (
-												<div className="flex h-full w-full items-center justify-center bg-orange-100/40 text-2xl font-semibold text-orange-600 dark:bg-orange-900/40 dark:text-orange-200">
-													No image available
-												</div>
-											)}
-											<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-										</div>
-										<div className="flex flex-wrap items-center justify-between gap-4 p-6 text-white">
-											<div className="flex flex-wrap items-center gap-4">
-												<p className="text-4xl font-extrabold drop-shadow-lg md:text-5xl">
+										<div className="flex h-full min-h-0 w-full flex-col gap-5 rounded-3xl bg-black/55 px-6 py-6 text-white shadow-2xl shadow-black/40 backdrop-blur">
+											<div className="min-h-[4rem]">
+												<p className="text-4xl font-extrabold leading-tight drop-shadow-md md:text-5xl">
 													{item.name}
 												</p>
+											</div>
+											<div className="relative flex-1 min-h-0 overflow-hidden rounded-2xl bg-black/30">
+												{item.image_url ? (
+													// eslint-disable-next-line @next/next/no-img-element
+													<img
+														src={item.image_url}
+														alt={item.name}
+														className="h-full w-full object-cover"
+													/>
+												) : (
+													<div className="flex h-full w-full items-center justify-center bg-orange-100/40 text-2xl font-semibold text-orange-600 dark:bg-orange-900/40 dark:text-orange-200">
+														No image available
+													</div>
+												)}
+											</div>
+											<div
+												className={cn(
+													"flex flex-wrap items-center gap-4",
+													item.amount ? "justify-between" : "justify-end"
+												)}
+											>
 												{item.amount && (
-													<span className="rounded-full bg-white/25 px-4 py-1 text-2xl font-semibold uppercase tracking-wide drop-shadow">
+													<span className="inline-flex items-center rounded-full bg-white/20 px-4 py-1 text-xl font-semibold uppercase tracking-wide text-white drop-shadow">
 														{item.amount}
 													</span>
 												)}
+												<p className="text-4xl font-extrabold drop-shadow-md md:text-5xl">
+													{formatCurrency(item.price)}
+												</p>
 											</div>
-											<p className="text-4xl font-extrabold drop-shadow-lg md:text-5xl">
-												{formatCurrency(item.price)}
-											</p>
 										</div>
 									</div>
 								))}
