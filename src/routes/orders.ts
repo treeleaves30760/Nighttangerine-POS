@@ -144,6 +144,7 @@ router.post("/import", async (req, res) => {
     const imported = await OrderModel.bulkImport(orders);
 
     console.log("Successfully imported:", imported.length, "orders");
+    console.log("Data has been committed to database and is now persistent");
 
     const response = {
       imported: imported.length,

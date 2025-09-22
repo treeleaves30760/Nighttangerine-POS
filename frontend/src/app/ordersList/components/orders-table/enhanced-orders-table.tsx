@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Search, Download, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -266,9 +266,8 @@ export function EnhancedOrdersTable({
                 </TableHeader>
                 <TableBody>
                   {paginatedOrders.map((order) => (
-                    <>
+                    <React.Fragment key={order.id}>
                       <TableRow
-                        key={order.id}
                         className={cn(
                           "transition-colors hover:bg-muted/50",
                           order.status === "finished" && "opacity-70"
@@ -338,7 +337,7 @@ export function EnhancedOrdersTable({
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>

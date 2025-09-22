@@ -89,8 +89,7 @@ export class OrderModel {
   static async findFinished(includeHidden = false): Promise<Order[]> {
     const ordersQuery = db("orders")
       .where({ status: "finished" })
-      .orderBy("number", "desc")
-      .limit(50);
+      .orderBy("number", "desc");
     if (!includeHidden) (ordersQuery as any).andWhere({ hidden: false });
     const orders = await ordersQuery;
     const ids = orders.map((o) => o.id);
@@ -113,24 +112,32 @@ export class OrderModel {
   }
 
   static async delete(id: string): Promise<boolean> {
-    const updated = await db("orders")
-      .where({ id })
-      .update({ hidden: true, updated_at: db.fn.now() });
-    return updated > 0;
+    return await db.transaction(async (trx) => {
+      // First delete order items
+      await trx("order_items").where({ order_id: id }).del();
+
+      // Then delete the order
+      const deleted = await trx("orders").where({ id }).del();
+      return deleted > 0;
+    });
   }
 
   static async bulkImport(orders: ImportOrderData[]): Promise<Order[]> {
     return await db.transaction(async (trx) => {
-      // First, collect all unique product IDs from the orders
+      // First, collect all unique product IDs and their details from the orders
       const allProductIds = new Set<string>();
-      const productsByName = new Map<string, { productId: string; name: string; price: number }>();
+      const productsById = new Map<string, { productId: string; name: string; price: number }>();
+      const productNames = new Set<string>();
 
       orders.forEach(order => {
         order.items.forEach(item => {
           allProductIds.add(item.productId);
-          productsByName.set(item.name || item.productId, {
+          const name = item.name || item.productId;
+          productNames.add(name);
+          // Store by productId instead of name to avoid overwriting
+          productsById.set(item.productId, {
             productId: item.productId,
-            name: item.name || item.productId,
+            name: name,
             price: item.price
           });
         });
@@ -138,21 +145,40 @@ export class OrderModel {
 
       console.log("Found", allProductIds.size, "unique products to check");
 
-      // Check which products exist in the database
-      const existingProducts = await trx("products")
+      // Check which products exist in the database by ID
+      const existingProductsById = await trx("products")
         .whereIn("id", Array.from(allProductIds))
-        .select("id");
+        .select("id", "name");
 
-      const existingProductIds = new Set(existingProducts.map(p => p.id));
-      const missingProductIds = Array.from(allProductIds).filter(id => !existingProductIds.has(id));
+      // Check which products exist in the database by name
+      const existingProductsByName = await trx("products")
+        .whereIn("name", Array.from(productNames))
+        .select("id", "name");
 
-      console.log("Missing products:", missingProductIds.length);
+      const existingProductIds = new Set(existingProductsById.map(p => p.id));
+      const existingProductNamesMap = new Map(existingProductsByName.map(p => [p.name, p.id]));
 
-      // Create missing products
-      for (const productId of missingProductIds) {
-        const productInfo = Array.from(productsByName.values()).find(p => p.productId === productId);
-        if (productInfo) {
-          console.log("Creating missing product:", productId, productInfo.name);
+      console.log("Found", existingProductsById.length, "existing products by ID");
+      console.log("Found", existingProductsByName.length, "existing products by name");
+
+      // Create a mapping for products that need to use existing IDs
+      const productIdMapping = new Map<string, string>();
+
+      // Process each product to determine if we should create new or use existing
+      for (const [productId, productInfo] of productsById) {
+        if (existingProductIds.has(productId)) {
+          // Product with this ID already exists, use it as-is
+          productIdMapping.set(productId, productId);
+          console.log("Using existing product ID:", productId, "for", productInfo.name);
+        } else if (existingProductNamesMap.has(productInfo.name)) {
+          // Product with this name exists, use existing product ID
+          const existingId = existingProductNamesMap.get(productInfo.name)!;
+          productIdMapping.set(productId, existingId);
+          console.log("Mapping product", productId, "to existing product", existingId, "with name:", productInfo.name);
+        } else {
+          // Product doesn't exist by ID or name, create new one
+          productIdMapping.set(productId, productId);
+          console.log("Creating new product:", productId, productInfo.name);
           await trx("products").insert({
             id: productId,
             name: productInfo.name,
@@ -202,10 +228,10 @@ export class OrderModel {
             .returning("*");
         }
 
-        // Create order items
+        // Create order items using the product ID mapping
         const toInsert = orderData.items.map((i) => ({
           order_id: order.id,
-          product_id: i.productId,
+          product_id: productIdMapping.get(i.productId) || i.productId,
           name: i.name || i.productId,
           price: i.price,
           quantity: i.quantity,
@@ -220,6 +246,7 @@ export class OrderModel {
       }
 
       console.log("Total imported orders:", importedOrders.length);
+      console.log("Transaction completed successfully - data should be committed to database");
       return importedOrders;
     });
   }
