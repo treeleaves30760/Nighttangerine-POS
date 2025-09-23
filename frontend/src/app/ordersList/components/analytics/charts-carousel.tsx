@@ -9,7 +9,6 @@ import { Order } from "@/lib/orders";
 import { useOrdersAnalytics } from "@/components/shared/orders-analysis/use-orders-analytics";
 
 // Import existing chart components
-import { StatusPie } from "@/components/shared/orders-analysis/status-pie";
 import { WeekdayBar } from "@/components/shared/orders-analysis/weekday-bar";
 import { HourlyBar } from "@/components/shared/orders-analysis/hourly-bar";
 import { OrdersPerDayBar } from "@/components/shared/orders-analysis/orders-per-day-bar";
@@ -39,7 +38,6 @@ export function ChartsCarousel({ orders, className }: ChartsCarouselProps) {
 			id: "overview",
 			title: "Overview",
 			charts: [
-				<StatusPie key="status" data={metrics.statusDist} />,
 				<RevenueTrend key="revenue" data={metrics.revenueTrend} />,
 				<OrdersPerDayBar key="orders-day" data={metrics.ordersByDay} />,
 			],
@@ -137,7 +135,7 @@ export function ChartsCarousel({ orders, className }: ChartsCarouselProps) {
 				className="flex overflow-x-auto snap-x snap-mandatory mb-2"
 				style={{
 					scrollbarWidth: "none",
-					msOverflowStyle: "none"
+					msOverflowStyle: "none",
 				}}
 			>
 				{chartSections.map((section) => (
@@ -153,7 +151,7 @@ export function ChartsCarousel({ orders, className }: ChartsCarouselProps) {
 									{section.charts.map((chart, chartIndex) => (
 										<div
 											key={chartIndex}
-											className="transition-transform duration-200 hover:scale-105 flex"
+											className="transition-transform duration-200 flex"
 										>
 											<div className="w-full">{chart}</div>
 										</div>
