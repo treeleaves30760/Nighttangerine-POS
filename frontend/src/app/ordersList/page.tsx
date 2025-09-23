@@ -10,6 +10,7 @@ import { TimePeriodFilter } from "./components/filters/time-period-filter";
 import { ExecutiveSummary } from "./components/analytics/executive-summary";
 import { ChartsCarousel } from "./components/analytics/charts-carousel";
 import { EnhancedOrdersTable } from "./components/orders-table/enhanced-orders-table";
+import { BackupManager } from "@/components/backup/backup-manager";
 
 // Import hooks
 import { useFilteredOrders, useOrdersStats } from "./hooks/use-filtered-orders";
@@ -27,12 +28,13 @@ export default function OrdersListPage() {
 		let mounted = true;
 		(async () => {
 			try {
-				const [active, finished] = await Promise.all([
+				const [active, finished, completed] = await Promise.all([
 					ordersApi.getActive(true),
 					ordersApi.getFinished(true),
+					ordersApi.getCompleted(true),
 				]);
 				if (!mounted) return;
-				const merged = [...active, ...finished].sort(
+				const merged = [...active, ...finished, ...completed].sort(
 					(a, b) => b.number - a.number
 				);
 				setOrders(merged);
@@ -253,6 +255,9 @@ export default function OrdersListPage() {
 
 			{/* Charts Carousel */}
 			<ChartsCarousel orders={filteredOrders} />
+
+			{/* Database Backup Manager */}
+			<BackupManager />
 
 			{/* Enhanced Orders Table */}
 			<EnhancedOrdersTable

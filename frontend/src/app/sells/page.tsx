@@ -28,11 +28,12 @@ export default function SellsPage() {
 			.then(setMenu)
 			.catch(() => setMenu([]));
 		// Load both active and finished so finished remain visible until removed
+		// Exclude completed orders from the sells page view
 		Promise.all([ordersApi.getActive(), ordersApi.getFinished()])
 			.then(([active, finished]) => {
-				const merged = [...finished, ...active].sort(
-					(a, b) => b.number - a.number
-				);
+				const merged = [...finished, ...active]
+					.filter((order) => order.status !== "completed")
+					.sort((a, b) => b.number - a.number);
 				setActiveOrders(merged);
 			})
 			.catch(() => setActiveOrders([]));
@@ -105,8 +106,9 @@ export default function SellsPage() {
 		setActiveOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
 	};
 
-	const removeOrder = async (id: string) => {
-		await ordersApi.remove(id);
+	const markCompleted = async (id: string) => {
+		await ordersApi.markCompleted(id);
+		// Remove completed orders from the sells page view
 		setActiveOrders((prev) => prev.filter((o) => o.id !== id));
 	};
 
@@ -117,7 +119,7 @@ export default function SellsPage() {
 	);
 
 	return (
-		<Section className="h-[80vh] flex flex-col py-6 text-[18px] md:text-[20px]">
+		<Section className="h-[80vh] overflow-auto flex flex-col text-[18px] md:text-[20px]">
 			<div className="grid grid-cols-3 gap-6 h-full">
 				<Card className="flex flex-col h-full">
 					<CardHeader>
@@ -266,7 +268,7 @@ export default function SellsPage() {
 											))}
 										</div>
 										<div className="mt-3 flex items-center justify-end gap-2">
-											{o.status !== "finished" && (
+											{o.status === "preparing" && (
 												<Button
 													variant="secondary"
 													onClick={() => markFinished(o.id)}
@@ -275,13 +277,15 @@ export default function SellsPage() {
 													Mark Finished
 												</Button>
 											)}
-											<Button
-												variant="destructive"
-												onClick={() => removeOrder(o.id)}
-												className="text-lg"
-											>
-												Remove
-											</Button>
+											{o.status === "finished" && (
+												<Button
+													variant="secondary"
+													onClick={() => markCompleted(o.id)}
+													className="text-lg"
+												>
+													Mark Completed
+												</Button>
+											)}
 										</div>
 									</div>
 								))}

@@ -4,7 +4,7 @@ import { broadcastOrders } from "../realtime";
 
 const router: Router = express.Router();
 
-// GET /api/orders?status=active|finished
+// GET /api/orders?status=active|finished|completed
 router.get("/", async (req, res) => {
   try {
     const status = String(req.query["status"] || "active");
@@ -12,26 +12,19 @@ router.get("/", async (req, res) => {
       req.query["includeHidden"] || "",
     ).toLowerCase();
     const withHidden = includeHidden === "1" || includeHidden === "true";
+
+    let orders;
     if (status === "finished") {
       // Finished with items for clerk view
-      const orders = await OrderModel.findFinished(withHidden);
-      return res.json(
-        orders.map((o) => ({
-          id: o.id,
-          number: o.number,
-          status: o.status,
-          createdAt: o.created_at,
-          items: (o.items || []).map((i) => ({
-            productId: i.product_id,
-            name: i.name,
-            price: Number(i.price),
-            quantity: i.quantity,
-          })),
-        })),
-      );
+      orders = await OrderModel.findFinished(withHidden);
+    } else if (status === "completed") {
+      // Completed orders for analysis view
+      orders = await OrderModel.findCompleted(withHidden);
+    } else {
+      // active = not finished and not completed, with items
+      orders = await OrderModel.findActive(withHidden);
     }
-    // active = not finished, with items
-    const orders = await OrderModel.findActive(withHidden);
+
     return res.json(
       orders.map((o) => ({
         id: o.id,
@@ -106,6 +99,60 @@ router.patch("/:id/finish", async (req, res) => {
   } catch (err) {
     console.error("Error finishing order:", err);
     return res.status(500).json({ error: "Failed to finish order" });
+  }
+});
+
+// PATCH /api/orders/:id/complete
+router.patch("/:id/complete", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await OrderModel.markCompleted(id);
+    if (!updated) return res.status(404).json({ error: "Order not found" });
+    const response = {
+      id: updated.id,
+      number: updated.number,
+      status: updated.status,
+      createdAt: updated.created_at,
+      items: (updated.items || []).map((i) => ({
+        productId: i.product_id,
+        name: i.name,
+        price: Number(i.price),
+        quantity: i.quantity,
+      })),
+    };
+    // Notify listeners
+    broadcastOrders().catch(() => {});
+    return res.json(response);
+  } catch (err) {
+    console.error("Error completing order:", err);
+    return res.status(500).json({ error: "Failed to complete order" });
+  }
+});
+
+// PATCH /api/orders/:id/hide
+router.patch("/:id/hide", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await OrderModel.hideOrder(id);
+    if (!updated) return res.status(404).json({ error: "Order not found" });
+    const response = {
+      id: updated.id,
+      number: updated.number,
+      status: updated.status,
+      createdAt: updated.created_at,
+      items: (updated.items || []).map((i) => ({
+        productId: i.product_id,
+        name: i.name,
+        price: Number(i.price),
+        quantity: i.quantity,
+      })),
+    };
+    // Notify listeners
+    broadcastOrders().catch(() => {});
+    return res.json(response);
+  } catch (err) {
+    console.error("Error hiding order:", err);
+    return res.status(500).json({ error: "Failed to hide order" });
   }
 });
 

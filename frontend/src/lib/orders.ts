@@ -5,7 +5,7 @@ export type OrderItem = {
   quantity: number;
 };
 
-export type OrderStatus = 'pending' | 'preparing' | 'finished';
+export type OrderStatus = 'pending' | 'preparing' | 'finished' | 'completed';
 
 export type Order = {
   id: string;
@@ -93,7 +93,7 @@ export const ordersApi = {
     } catch {
       const all = readLS();
       return all
-        .filter((o) => (includeHidden ? true : !o.hidden) && o.status !== 'finished')
+        .filter((o) => (includeHidden ? true : !o.hidden) && o.status !== 'finished' && o.status !== 'completed')
         .sort((a, b) => b.number - a.number);
     }
   },
@@ -107,6 +107,20 @@ export const ordersApi = {
       const all = readLS();
       return all
         .filter((o) => (includeHidden ? true : !o.hidden) && o.status === 'finished')
+        .sort((a, b) => b.number - a.number)
+        .slice(0, 30);
+    }
+  },
+
+  // Return completed orders
+  async getCompleted(includeHidden = false): Promise<Order[]> {
+    try {
+      const q = includeHidden ? '&includeHidden=1' : '';
+      return await fetchApi<Order[]>(`/api/orders?status=completed${q}`);
+    } catch {
+      const all = readLS();
+      return all
+        .filter((o) => (includeHidden ? true : !o.hidden) && o.status === 'completed')
         .sort((a, b) => b.number - a.number)
         .slice(0, 30);
     }
@@ -147,6 +161,37 @@ export const ordersApi = {
       next[idx] = updated;
       writeLS(next);
       return updated;
+    }
+  },
+
+  // Mark order completed (moves from finished to completed)
+  async markCompleted(id: string): Promise<Order> {
+    try {
+      return await fetchApi<Order>(`/api/orders/${id}/complete`, { method: 'PATCH' });
+    } catch {
+      const all = readLS();
+      const idx = all.findIndex((o) => o.id === id);
+      if (idx === -1) throw new Error('Not found');
+      const updated: Order = { ...all[idx], status: 'completed' };
+      const next = [...all];
+      next[idx] = updated;
+      writeLS(next);
+      return updated;
+    }
+  },
+
+  // Hide order (for sells page)
+  async hideOrder(id: string): Promise<void> {
+    try {
+      await fetchApi<void>(`/api/orders/${id}/hide`, { method: 'PATCH' });
+    } catch {
+      const all = readLS();
+      const idx = all.findIndex((o) => o.id === id);
+      if (idx !== -1) {
+        const next = [...all];
+        next[idx] = { ...next[idx], hidden: true } as Order;
+        writeLS(next);
+      }
     }
   },
 

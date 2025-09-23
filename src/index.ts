@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import productsRouter from "./routes/products";
 import ordersRouter from "./routes/orders";
+import backupRouter from "./routes/backup";
 import { initWebSocket } from "./realtime";
 
 dotenv.config();
@@ -58,6 +59,7 @@ app.get("/health", (_req, res) => {
 // API Routes
 app.use("/api/products", productsRouter);
 app.use("/api/orders", ordersRouter);
+app.use("/api/backup", backupRouter);
 
 // Basic API route
 app.get("/api/status", (_req, res) => {
