@@ -82,6 +82,9 @@ pnpm run dev:frontend
 
 # Install all dependencies (root + frontend)
 pnpm run install:all
+
+# Start the Docker
+pnpm run docker:up
 ```
 
 ### Database Management
