@@ -206,7 +206,7 @@ export default function SellsPage() {
 												}
 											/>
 											<Button
-												variant="secondary"
+												variant="destructive"
 												onClick={() => removeFromCart(i.product.id)}
 												className="text-sm"
 											>
