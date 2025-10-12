@@ -148,7 +148,7 @@ function MenuShowcase() {
 									>
 										<div className="flex flex-1 flex-wrap items-center gap-3">
 											<p
-												className="truncate text-3xl font-bold text-orange-100 dark:text-orange-200"
+												className="truncate text-3xl font-bold text-orange-800 dark:text-orange-200"
 												title={item.name}
 											>
 												{item.name}
@@ -159,7 +159,7 @@ function MenuShowcase() {
 												</span>
 											)}
 										</div>
-										<p className="ml-auto text-2xl font-bold text-orange-400 dark:text-orange-200">
+										<p className="ml-auto text-2xl font-bold text-orange-600 dark:text-orange-200">
 											{formatCurrency(item.price)}
 										</p>
 									</li>
@@ -167,7 +167,7 @@ function MenuShowcase() {
 							</ul>
 						</div>
 						<div className="flex-1">
-							<div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-muted/20 shadow-2xl">
+							<div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-orange-50/60 shadow-2xl dark:bg-muted/20">
 								{items.map((item, idx) => (
 									<div
 										key={item.id}
@@ -179,13 +179,13 @@ function MenuShowcase() {
 												: "opacity-0 pointer-events-none"
 										)}
 									>
-										<div className="flex h-full min-h-0 w-full flex-col gap-5 rounded-3xl bg-black/55 px-6 py-6 text-white shadow-2xl shadow-black/40 backdrop-blur">
+										<div className="flex h-full min-h-0 w-full flex-col gap-5 rounded-3xl bg-white/90 px-6 py-6 text-orange-900 shadow-2xl shadow-orange-200/80 backdrop-blur dark:bg-black/55 dark:text-white dark:shadow-black/40">
 											<div className="min-h-[4rem]">
 												<p className="text-4xl font-extrabold leading-tight drop-shadow-md md:text-5xl">
 													{item.name}
 												</p>
 											</div>
-											<div className="relative flex-1 min-h-0 overflow-hidden rounded-2xl bg-black/30">
+											<div className="relative flex-1 min-h-0 overflow-hidden rounded-2xl bg-orange-100/60 dark:bg-black/30">
 												{item.image_url ? (
 													// eslint-disable-next-line @next/next/no-img-element
 													<img
@@ -194,7 +194,7 @@ function MenuShowcase() {
 														className="h-full w-full object-cover"
 													/>
 												) : (
-													<div className="flex h-full w-full items-center justify-center bg-orange-100/40 text-2xl font-semibold text-orange-600 dark:bg-orange-900/40 dark:text-orange-200">
+													<div className="flex h-full w-full items-center justify-center bg-orange-100/70 text-2xl font-semibold text-orange-600 dark:bg-orange-900/40 dark:text-orange-200">
 														No image available
 													</div>
 												)}
@@ -206,11 +206,11 @@ function MenuShowcase() {
 												)}
 											>
 												{item.amount && (
-													<span className="inline-flex items-center rounded-full bg-white/20 px-4 py-1 text-xl font-semibold uppercase tracking-wide text-white drop-shadow">
+													<span className="inline-flex items-center rounded-full bg-orange-100/80 px-4 py-1 text-xl font-semibold uppercase tracking-wide text-orange-700 drop-shadow dark:bg-white/20 dark:text-white">
 														{item.amount}
 													</span>
 												)}
-												<p className="text-4xl font-extrabold drop-shadow-md md:text-5xl">
+												<p className="text-4xl font-extrabold text-orange-700 drop-shadow-md md:text-5xl dark:text-white">
 													{formatCurrency(item.price)}
 												</p>
 											</div>

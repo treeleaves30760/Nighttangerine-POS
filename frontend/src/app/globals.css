@@ -11,11 +11,11 @@
     --background: 0 0% 100%; /* #FFFFFF */
     --foreground: 220 15% 10%; /* near-black text */
 
-    --card: 224 47% 11%; /* #0F172A */
-    --card-foreground: 220 13% 90%;
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 220 15% 12%; /* dark slate text for light surfaces */
 
-    --popover: 224 47% 11%;
-    --popover-foreground: 220 13% 90%;
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 220 15% 12%;
 
     /* Brand primary: Orange #FF8833 */
     --primary: 25 100% 60%; /* #FF8833 */
